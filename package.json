@@ -1,0 +1,47 @@
+{
+  "name": "node-modular-backend-template",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modular Express + Sequelize (MariaDB/MySQL) + Redis backend template: core, shared, admin and field modules",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "auth": "node scripts/create-super-admin.js",
+    "migrate": "node src/core/db/migrate.js up",
+    "migrate:status": "node src/core/db/migrate.js status",
+    "migrate:down": "node src/core/db/migrate.js down",
+    "seed": "node src/core/db/seed.js",
+    "lint": "oxlint && node scripts/check-boundaries.js",
+    "check:boundaries": "node scripts/check-boundaries.js",
+    "test": "node test/run.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
+    "joi": "^18.3.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.5.0",
+    "mysql2": "^3.24.6",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.2.1",
+    "password-validator": "^5.3.0",
+    "rate-limit-redis": "^6.0.2",
+    "sequelize": "^6.37.8",
+    "slugify": "^1.6.9",
+    "stripe": "^23.0.1"
+  },
+  "devDependencies": {
+    "oxlint": "^1.90.0"
+  }
+}

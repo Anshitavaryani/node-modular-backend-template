@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets: never commit real values. .env.example stays tracked.
+.env
+.env.*
+!.env.example
+
+# Keys and certificates
+*.pem
+*.key
+*.crt
+
+# Runtime data: uploads and logs live in STORAGE_DIR (outside the repo by default), and these folders are for local runs.
+public/uploads/
+storage/
+logs/
+*.log
+npm-debug.log*
+
+# Tests
+coverage/
+
+# Editors and OS files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+dump.rdb
