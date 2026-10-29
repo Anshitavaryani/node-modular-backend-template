@@ -10,23 +10,23 @@ where each product (`shared`, `admin`, `field`) owns its modules, and each modul
 tests. It is generic: a project starts from it, renames it (README, "Starting a project from this template") and adds its
 own modules. Keep project names and business rules out of `src/core` and `src/shared`.
 
-Do not remove a starter feature (FAQ, Stripe, the country/state/city/category lookups, seeds) without asking the owner.
+Do not remove a starter feature (FAQ, Stripe, the country/state/city/category lookups, the seed) without asking the owner.
 
 ## Run it
 
 ```bash
 cp .env.example .env            # set JWT_SECRET and the SUPER_ADMIN_* values; the role IDs must match the seeds
 npm install
-npm run migrate && npm run seed && npm run auth
+npm run migrate && npm run seed && npm run auth   # seed downloads countries, states and cities
 npm run dev                     # needs MariaDB 10.11+ or MySQL 8 and Redis 7+ (or: docker compose up -d mysql redis)
-npm test                        # 52 tests; builds app_test and empties Redis DB 15
+npm test                        # 54 tests; builds app_test and empties Redis DB 15
 npm run lint                    # oxlint and the module boundary check
 ```
 
 Docker: `docker compose up -d --build`, then `docker compose run --rm api npm run migrate` (and `seed`, `auth`). If
 another stack holds a port, change `CENTRAL_MYSQL_PORT`, `REDIS_PORT`, `PMA_PORT` or `PORT` in `.env`.
 
-## Done and verified (52 tests pass, lint clean with no warnings, boundaries clean)
+## Done and verified (54 tests pass, lint clean with no warnings, boundaries clean)
 
 - **Versions.** Every npm package is at its latest release. The Docker images are Node 26 LTS, MariaDB 12.3 LTS,
   Redis 8 and phpMyAdmin 5.2. An existing MariaDB 10.11 volume upgrades in place (`MARIADB_AUTO_UPGRADE`).
@@ -65,6 +65,12 @@ another stack holds a port, change `CENTRAL_MYSQL_PORT`, `REDIS_PORT`, `PMA_PORT
   - List pages are capped at `MAX_API_DATA_LIMIT`.
   - Upload errors are 400s, and a failed request's files are deleted.
   - A body that is not valid JSON is a 400 (one over 1 MB a 413), not a 500.
+- **Reference data without SQL dumps.** Countries, states and cities are downloaded at seed time from the
+  countries-states-cities dataset (latest release: 250 countries, 5,327 states, 152,378 cities) instead of 20 MB of SQL
+  in the repo, and `npm run geo:update` keeps an existing database current. Time zones are built from Node's list plus
+  the dataset's names (446, with UTC, which the old dump lacked). The seed creates only the Super Admin and User roles
+  and the Admin department (IDs 1, 2 and 1); projects create the rest from the admin panel. Checked on a new database
+  with the real download, from the host and from the Docker image, and the suite on MariaDB 12.3 and MySQL 8.4.
   - Saving an unchanged FAQ entry no longer answers 404.
 
 ## Left to do

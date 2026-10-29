@@ -1,0 +1,339 @@
+[
+  {
+    "id": 101,
+    "name": "India",
+    "iso3": "IND",
+    "iso2": "IN",
+    "numeric_code": "356",
+    "phonecode": "91",
+    "capital": "New Delhi",
+    "currency": "INR",
+    "currency_name": "Indian rupee",
+    "currency_symbol": "₹",
+    "tld": ".in",
+    "native": "भारत",
+    "population": 1417492000,
+    "gdp": 4187017,
+    "region": "Asia",
+    "region_id": 3,
+    "subregion": "Southern Asia",
+    "subregion_id": 14,
+    "nationality": "Indian",
+    "timezones": [
+      {
+        "zoneName": "Asia/Kolkata",
+        "gmtOffset": 19800,
+        "gmtOffsetName": "UTC+05:30",
+        "abbreviation": "IST",
+        "tzName": "Indian Standard Time"
+      }
+    ],
+    "translations": {
+      "br": "India",
+      "ko": "인도",
+      "pt-BR": "Índia",
+      "pt": "Índia",
+      "nl": "India",
+      "hr": "Indija",
+      "fa": "هند",
+      "de": "Indien",
+      "es": "India",
+      "fr": "Inde",
+      "ja": "インド",
+      "it": "India",
+      "zh-CN": "印度",
+      "tr": "Hindistan",
+      "ru": "Индия",
+      "uk": "Індія",
+      "pl": "Indie",
+      "hi": "भारत",
+      "ar": "الهند"
+    },
+    "latitude": "20.00000000",
+    "longitude": "77.00000000",
+    "emoji": "🇮🇳",
+    "emojiU": "U+1F1EE U+1F1F3",
+    "states": [
+      {
+        "id": 4026,
+        "name": "Karnataka",
+        "iso2": "KA",
+        "iso3166_2": "IN-KA",
+        "native": "कर्नाटक",
+        "latitude": "14.52038960",
+        "longitude": "75.72235210",
+        "type": "state",
+        "timezone": "Asia/Kolkata",
+        "cities": [
+          {
+            "id": 57598,
+            "name": "Afzalpur",
+            "county_id": 11867,
+            "latitude": "17.19986000",
+            "longitude": "76.36018000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57613,
+            "name": "Ajjampur",
+            "county_id": null,
+            "latitude": "13.72794000",
+            "longitude": "76.00680000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 141854,
+            "name": "Aknapur",
+            "county_id": 11059,
+            "latitude": "18.38576389",
+            "longitude": "77.27225278",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57632,
+            "name": "Aland",
+            "county_id": null,
+            "latitude": "17.56425000",
+            "longitude": "76.56854000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57644,
+            "name": "Alnavar",
+            "county_id": null,
+            "latitude": "15.42727000",
+            "longitude": "74.74111000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57656,
+            "name": "Alur",
+            "county_id": null,
+            "latitude": "12.97805000",
+            "longitude": "75.99094000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57702,
+            "name": "Anekal",
+            "county_id": null,
+            "latitude": "12.71110000",
+            "longitude": "77.69557000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57711,
+            "name": "Ankola",
+            "county_id": null,
+            "latitude": "14.66049000",
+            "longitude": "74.30470000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57713,
+            "name": "Annigeri",
+            "county_id": null,
+            "latitude": "15.42513000",
+            "longitude": "75.43350000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57735,
+            "name": "Arkalgud",
+            "county_id": null,
+            "latitude": "12.76171000",
+            "longitude": "76.06035000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57740,
+            "name": "Arsikere",
+            "county_id": 11868,
+            "latitude": "13.31446000",
+            "longitude": "76.25704000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57757,
+            "name": "Athani",
+            "county_id": null,
+            "latitude": "16.72613000",
+            "longitude": "75.06421000",
+            "timezone": "Asia/Kolkata"
+          }
+        ]
+      },
+      {
+        "id": 4021,
+        "name": "Delhi",
+        "iso2": "DL",
+        "iso3166_2": "IN-DL",
+        "native": "दिल्ली",
+        "latitude": "28.63280270",
+        "longitude": "77.21977130",
+        "type": "union territory",
+        "timezone": "Asia/Kolkata",
+        "cities": [
+          {
+            "id": 57655,
+            "name": "Alipur",
+            "county_id": null,
+            "latitude": "28.79862000",
+            "longitude": "77.13314000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 57909,
+            "name": "Bawana",
+            "county_id": 11266,
+            "latitude": "28.79820000",
+            "longitude": "77.03431000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 164846,
+            "name": "Burari",
+            "county_id": 11748,
+            "latitude": "28.75570000",
+            "longitude": "77.19941000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 58171,
+            "name": "Central Delhi",
+            "county_id": null,
+            "latitude": "28.64857000",
+            "longitude": "77.21895000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 131679,
+            "name": "Delhi",
+            "county_id": null,
+            "latitude": "28.65195000",
+            "longitude": "77.23149000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 164847,
+            "name": "Delhi Cantonment",
+            "county_id": null,
+            "latitude": "28.60000000",
+            "longitude": "77.13333000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 131687,
+            "name": "Deoli",
+            "county_id": 11751,
+            "latitude": "28.50254000",
+            "longitude": "77.23117000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 131821,
+            "name": "East Delhi",
+            "county_id": null,
+            "latitude": "28.66242000",
+            "longitude": "77.29122000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 165010,
+            "name": "Jharoda Kalan",
+            "county_id": 11752,
+            "latitude": "28.65264000",
+            "longitude": "76.95208000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 132406,
+            "name": "Karol Bagh",
+            "county_id": null,
+            "latitude": "28.65136000",
+            "longitude": "77.19072000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 164891,
+            "name": "Kondli",
+            "county_id": 11747,
+            "latitude": "28.61167000",
+            "longitude": "77.32667000",
+            "timezone": "Asia/Kolkata"
+          },
+          {
+            "id": 164862,
+            "name": "Mundka",
+            "county_id": 11266,
+            "latitude": "28.68012000",
+            "longitude": "77.02975000",
+            "timezone": "Asia/Kolkata"
+          }
+        ]
+      }
+    ],
+    "cities": []
+  },
+  {
+    "id": 244,
+    "name": "Western Sahara",
+    "iso3": "ESH",
+    "iso2": "EH",
+    "numeric_code": "732",
+    "phonecode": "212",
+    "capital": "El-Aaiun",
+    "currency": "MAD",
+    "currency_name": "Moroccan dirham",
+    "currency_symbol": "DH",
+    "tld": ".eh",
+    "native": "الصحراء الغربية",
+    "population": 600904,
+    "gdp": null,
+    "region": "Africa",
+    "region_id": 1,
+    "subregion": "Northern Africa",
+    "subregion_id": 1,
+    "nationality": "Sahrawi, Sahrawian, Sahraouian",
+    "timezones": [
+      {
+        "zoneName": "Africa/El_Aaiun",
+        "gmtOffset": 0,
+        "gmtOffsetName": "UTC±00",
+        "abbreviation": "WET",
+        "tzName": "Western European Time"
+      }
+    ],
+    "latitude": "24.50000000",
+    "longitude": "-13.00000000",
+    "emoji": "🇪🇭",
+    "emojiU": "U+1F1EA U+1F1ED",
+    "states": [],
+    "cities": [
+      {
+        "id": 67127,
+        "name": "Gueltat Zemmour",
+        "county_id": null,
+        "latitude": "25.14276000",
+        "longitude": "-12.37168000",
+        "timezone": "Africa/Casablanca"
+      },
+      {
+        "id": 67134,
+        "name": "Imlili",
+        "county_id": null,
+        "latitude": "22.65580000",
+        "longitude": "-15.60719000",
+        "timezone": "Africa/Casablanca"
+      },
+      {
+        "id": 67220,
+        "name": "Smara",
+        "county_id": null,
+        "latitude": "26.73841000",
+        "longitude": "-11.67194000",
+        "timezone": "Africa/Casablanca"
+      }
+    ]
+  }
+]

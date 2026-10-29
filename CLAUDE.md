@@ -66,8 +66,10 @@ In production every `/user/auth/*` and `/admin/auth/*` path is rate limited per 
   password is set.
 - Self-registration role: the `role_id` **header**, never the body. Only roles in `SELF_REGISTERABLE_ROLE_IDS` are
   accepted; a missing header means `USR_ROLE_ID`.
-- Seeded roles (`src/core/db/seeds/roles.sql`): 1 Super Admin (`SUP_ADM`), 2 Admin (`ADM`), 3 Sub_Admin, 4 Engineer,
-  5 Editor, 6 User (`USR`). Departments: 1 IT, 2 Admin, 3 Maintenance, 4 Sales. Set the IDs in `.env`.
+- Seeded roles (`src/core/db/seeds/roles.sql`): only 1 Super Admin (`SUP_ADM`) and 2 User (`USR`); department: only
+  1 Admin, the super admin's. Set the IDs in `.env`. Other roles and departments are created from the admin panel
+  (`POST /role`, `POST /department`). The built-in tiers check abbreviations, so a role gets them only with `ADM`,
+  `SUB_ADM`, `ENG` or `EDTR`.
 
 ## Layout and module rules
 
@@ -118,8 +120,11 @@ run `npm run lint` and `npm test`.
   Never edit an applied migration; add a new one. `npm run migrate`, `migrate:status`, `migrate:down`.
 - The baseline migration loads `src/core/db/schema/baseline.sql` into an empty database. Existing databases only
   record it.
-- Reference data: `npm run seed` loads roles, departments, countries, states, cities, categories and timezones, only into
-  empty tables.
+- Reference data: `npm run seed` fills each empty reference table, once. Roles, departments and categories come from
+  `src/core/db/seeds/*.sql`. Countries, states and cities are downloaded from the countries-states-cities dataset
+  (`GEO_DATA_URL`; ODbL, credit it), so seeding a new database needs internet once. Time zones come from Node's own
+  list plus the dataset's names (`src/core/db/referenceData.js`). `npm run geo:update` brings an existing database in
+  line with the latest dataset: changed rows updated, new ones added, dropped ones switched off (not deleted).
 
 ## Redis
 
@@ -134,7 +139,8 @@ database **15**, which the test setup empties; never point tests at another data
 | `npm run dev` | start with reload (needs MariaDB and Redis running; `.env` from `.env.example`) |
 | `npm start` | start (production uses `NODE_ENV=production`) |
 | `npm run migrate` / `migrate:status` / `migrate:down` | schema |
-| `npm run seed` | reference data |
+| `npm run seed` | reference data, into empty tables (downloads countries, states and cities) |
+| `npm run geo:update` | refresh countries, states and cities from the latest dataset |
 | `npm run auth` | create the first super admin from `SUPER_ADMIN_*` (the password must meet the password rules) |
 | `npm run backup` | gzipped dump of the database into `STORAGE_DIR/backups`, keeping `BACKUP_RETENTION_DAYS` days |
 | `npm run start:pm2` / `staging` | start under pm2 (installed globally) with `ecosystem.config.json` / `ecosystem.staging-config.json` |
@@ -152,7 +158,8 @@ characters in production), `USR_ROLE_ID`. Also used: `CENTRAL_DB_DIALECT` (`mari
 `ADMIN_TOKEN_HOURS`, `SELF_REGISTERABLE_ROLE_IDS`, `ACCESSDOMAINS` (CORS origins), `MAIL_TRANSPORT` (`smtp` or `log`),
 `SMTP_*`, `EMAIL_FROM`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DEFAULT_AMOUNT`,
 `STRIPE_*_MY|AU|MX|WECHAT|UK` (country accounts), `SUPER_ADMIN_*`, `ADM_DEPT_ID`, `JOBS_ENABLED`, `STORAGE_DIR`,
-`DEFAULT_API_DATA_LIMIT`, `MAX_API_DATA_LIMIT`, `BACKUP_RETENTION_DAYS`, `PMA_PORT` (compose only).
+`DEFAULT_API_DATA_LIMIT`, `MAX_API_DATA_LIMIT`, `BACKUP_RETENTION_DAYS`, `GEO_DATA_URL` (the dataset, a URL or a file),
+`PMA_PORT` (compose only).
 
 ## Conventions when you change code
 

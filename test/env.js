@@ -21,5 +21,14 @@ process.env.REDIS_DB = process.env.TEST_REDIS_DB || '15';
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
 process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_placeholder';
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_placeholder';
+// Reference data: the seeded role and department IDs (src/core/db/seeds), whatever .env says, and a small sample of
+// the countries-states-cities dataset instead of the download.
+process.env.SUP_ADM_ROLE_ID = '1';
+process.env.USR_ROLE_ID = '2';
+process.env.SELF_REGISTERABLE_ROLE_IDS = '2';
+process.env.ADM_DEPT_ID = '1';
+process.env.GEO_DATA_URL = path.join(__dirname, 'fixtures', 'geo.json');
+// A list cap the sample's 27 cities go past.
+process.env.MAX_API_DATA_LIMIT = '20';
 
 module.exports = { TEST_DATABASE };

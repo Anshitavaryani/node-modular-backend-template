@@ -3,7 +3,7 @@
 const { TEST_DATABASE } = require('./env');
 const mysql = require('mysql2/promise');
 const config = require('../src/core/config/config');
-const { run: migrate } = require('../src/core/db/migrate');
+const { run: migrate, connect } = require('../src/core/db/migrate');
 const { run: seed } = require('../src/core/db/seed');
 const redis = require('../src/core/redis/redis');
 
@@ -22,6 +22,14 @@ async function globalSetup() {
     }
     await migrate('up', { database: TEST_DATABASE, log: () => {} });
     await seed({ database: TEST_DATABASE, log: () => {} });
+    // The admin tiers the code checks (ROLE in src/shared/identity/constants.js). The seed has only the super admin and
+    // user roles; a project creates these from the admin panel.
+    const db = connect(TEST_DATABASE);
+    try {
+        await db.query("INSERT INTO roles (name, abbreviation) VALUES ('Admin', 'ADM'), ('Sub Admin', 'SUB_ADM'), ('Engineer', 'ENG'), ('Editor', 'EDTR')");
+    } finally {
+        await db.close();
+    }
     // Empty the test Redis database (cooldowns and lockouts from earlier runs would refuse the first sign-ins).
     // Only the test database index is flushed, never the server's other databases.
     if (String(config.redis.db) !== process.env.REDIS_DB) throw new Error('Refusing to flush: not the test Redis database');

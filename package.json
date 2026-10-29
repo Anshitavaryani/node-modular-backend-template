@@ -18,6 +18,7 @@
     "migrate:status": "node src/core/db/migrate.js status",
     "migrate:down": "node src/core/db/migrate.js down",
     "seed": "node src/core/db/seed.js",
+    "geo:update": "node src/core/db/seed.js --update-geo",
     "lint": "oxlint && node scripts/check-boundaries.js",
     "check:boundaries": "node scripts/check-boundaries.js",
     "test": "node test/run.js"

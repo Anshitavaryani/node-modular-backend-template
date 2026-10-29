@@ -7,8 +7,7 @@ the repo, and `HANDOFF.md` lists what is left.
 ## Kept
 
 Every feature of the starter: user and admin accounts (registration, code-based sign-in, password reset), roles,
-departments, countries, states, cities, categories, timezones, FAQ, contact us and Stripe payments. Reference data is
-seeded from the starter's SQL dumps.
+departments, countries, states, cities, categories, timezones, FAQ, contact us and Stripe payments.
 
 ## Added for the template
 
@@ -23,6 +22,11 @@ seeded from the starter's SQL dumps.
   own dialect (`CENTRAL_DB_DIALECT`). Two Sequelize 7 defaults are turned back to the starter's behaviour, so the API
   does not change: BIGINT ids are numbers, not strings (`NumericBigInt`), and values are not type-checked against
   their columns (`noTypeValidation`); requests are validated before the database instead.
+- **Reference data from its source, not SQL dumps** (owner's decision). The starter's dumps were out of date and 20 MB.
+  Countries, states and cities are downloaded at seed time from the countries-states-cities dataset (the source of
+  those dumps; ODbL), and `npm run geo:update` refreshes them; time zones are built from Node. Only the Super Admin
+  and User roles and one department are seeded: projects create their other roles and departments from the admin
+  panel. `ADM_ROLE_ID`, which nothing read, is gone.
 - **`dottie` vendored.** Sequelize 7 requires `dottie`, and npm marks every published version "no longer supported", so
   installing printed a deprecation warning. Version 2.0.7 is kept unchanged in `vendor/dottie` (MIT) and installed from
   there (`overrides` in `package.json`). Remove it when Sequelize stops requiring it.

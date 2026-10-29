@@ -7,10 +7,10 @@ const path = require('node:path');
 const { start, apiUrl, request, ensureSuperAdmin, latestCode, createAdmin, signInAdmin, signUpUser, close } = require('./helpers');
 const { UPLOADS_DIR } = require('../src/core/config/paths');
 const redis = require('../src/core/redis/redis');
-const { Admin, User, UserLoginTiming } = require('../src/models');
+const { Admin, User, UserLoginTiming, Role } = require('../src/models');
 
 const USER = { name: 'Ann Test', email: 'ann.identity@test.example', mobile: '9999900001', password: 'Passw0rd12', confirm_password: 'Passw0rd12' };
-const USER_ROLE = { 'role_id': '6' };
+const USER_ROLE = { role_id: process.env.USR_ROLE_ID };
 let userToken;
 let superAdmin;
 
@@ -107,22 +107,24 @@ test('admin sign-in works and protects admin-only writes', async () => {
 test('a super admin creates an admin; an ordinary admin cannot', async () => {
     const sign = await request('POST', '/admin/auth/login', { body: { email: superAdmin.email, password: superAdmin.password } });
     const superToken = sign.body.data.token;
+    // The Admin role is one a project creates from the admin panel (the test setup adds it); department 1 is seeded.
+    const adminTier = { role_id: (await Role.findOne({ where: { abbreviation: 'ADM' } })).id, department_id: 1 };
     const created = await request('POST', '/admin/auth/register', {
         token: superToken,
-        body: { name: 'Ops Admin', email: 'ops.admin@test.example', password: 'Passw0rd#Ops1', confirm_password: 'Passw0rd#Ops1', role_id: 2, department_id: 2 },
+        body: { name: 'Ops Admin', email: 'ops.admin@test.example', password: 'Passw0rd#Ops1', confirm_password: 'Passw0rd#Ops1', ...adminTier },
     });
     assert.equal(created.status, 201);
     assert.equal(typeof created.body.data.id, 'number', 'a new row\'s id is a number, not a BigInt');
     const weak = await request('POST', '/admin/auth/register', {
         token: superToken,
-        body: { name: 'Weak', email: 'weak.admin@test.example', password: 'weakpass1', confirm_password: 'weakpass1', role_id: 2, department_id: 2 },
+        body: { name: 'Weak', email: 'weak.admin@test.example', password: 'weakpass1', confirm_password: 'weakpass1', ...adminTier },
     });
     assert.equal(weak.status, 400);
     const opsSign = await request('POST', '/admin/auth/login', { body: { email: 'ops.admin@test.example', password: 'Passw0rd#Ops1' } });
     assert.equal(opsSign.status, 200);
     const denied = await request('POST', '/admin/auth/register', {
         token: opsSign.body.data.token,
-        body: { name: 'Second', email: 'second.admin@test.example', password: 'Passw0rd#Two11', confirm_password: 'Passw0rd#Two11', role_id: 2, department_id: 2 },
+        body: { name: 'Second', email: 'second.admin@test.example', password: 'Passw0rd#Two11', confirm_password: 'Passw0rd#Two11', ...adminTier },
     });
     assert.equal(denied.status, 401);
 });

@@ -110,6 +110,9 @@ module.exports = {
     jobsEnabled: envVars.JOBS_ENABLED !== 'false',
     // npm run backup keeps its files (STORAGE_DIR/backups) this many days.
     backupRetentionDays: envVars.BACKUP_RETENTION_DAYS,
+    // Countries, states and cities for npm run seed and geo:update (src/core/db/referenceData.js): a URL or a file path.
+    geoDataUrl: envVars.GEO_DATA_URL
+        || 'https://github.com/dr5hn/countries-states-cities-database/releases/latest/download/json-countries+states+cities.json.gz',
 
     // Stripe (shared/billing): the main account, and the per-country accounts some payment methods use (a country whose
     // keys are not set uses the main account). DEFAULT_AMOUNT is in whole currency units, charged when none is sent.
@@ -126,7 +129,6 @@ module.exports = {
 
     // Role and department IDs seeded by src/core/db/seeds (set them in .env to match the seeded rows).
     SUP_ADM_ROLE_ID: envVars.SUP_ADM_ROLE_ID,
-    ADM_ROLE_ID: envVars.ADM_ROLE_ID,
     USR_ROLE_ID: envVars.USR_ROLE_ID,
     SELF_REGISTERABLE_ROLE_IDS: selfRegisterableRoleIds,
     ADM_DEPT_ID: envVars.ADM_DEPT_ID,

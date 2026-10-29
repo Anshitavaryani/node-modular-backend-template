@@ -70,7 +70,8 @@ npm run dev
 | `npm run dev` | start with reload on change |
 | `npm start` | start |
 | `npm run migrate` / `migrate:status` / `migrate:down` | schema changes |
-| `npm run seed` | reference data (only into empty tables) |
+| `npm run seed` | reference data, only into empty tables: roles, departments and categories from `src/core/db/seeds`, countries, states and cities downloaded from the dataset (below), time zones from Node |
+| `npm run geo:update` | bring countries, states and cities in line with the latest dataset (changed rows updated, new ones added, dropped ones switched off) |
 | `npm run auth` | create the first super admin |
 | `npm run backup` | gzipped database dump into `STORAGE_DIR/backups`, keeping 14 days (needs `mariadb-dump`; the Docker image has it: `docker compose run --rm api npm run backup`) |
 | `npm run start:pm2` / `npm run staging` | start under pm2 (install it globally) with `ecosystem.config.json` / `ecosystem.staging-config.json` |
@@ -85,11 +86,22 @@ version is used. Point a Stripe webhook endpoint at `POST /api/v1/payment/stripe
 (`REJECTED`), and `charge.refunded` (`REFUNDED` when fully refunded). A payment intent with no `paymentMethod` lets
 Stripe offer the methods switched on in its dashboard.
 
+## Countries, states and cities
+
+`npm run seed` downloads them from the
+[countries-states-cities database](https://github.com/dr5hn/countries-states-cities-database) (latest release; set
+`GEO_DATA_URL` to another URL or to a downloaded file, for example on a server without internet). Its data is under the
+[Open Database License](https://opendatacommons.org/licenses/odbl/1-0/): credit "countries-states-cities-database by
+Darshan Gada" wherever the data is shown or shared. Run `npm run geo:update` from time to time to pick up its changes.
+`npm test` uses a small sample of it (`test/fixtures/geo.json`) and needs no internet.
+
 ## Starting a project from this template
 
 1. Rename the app in `.env` (`APP_NAME`), `package.json`, `ecosystem.config.json` and `ecosystem.staging-config.json`,
    and set real secrets (`JWT_SECRET`, `SUPER_ADMIN_PASSWORD`, Stripe keys).
-2. Set the role and department IDs in `.env` to match the seeded rows.
+2. Set the role and department IDs in `.env` to match the seeded rows. The seed creates only the Super Admin role, the
+   User role and one department (Admin); create the others from the admin panel. A role gets the built-in admin tiers
+   only with the abbreviation `ADM`, `SUB_ADM`, `ENG` or `EDTR`.
 3. Add the project's products and modules (see `CLAUDE.md`, "Layout and module rules").
 4. Put the project's tables in migrations. Never edit an applied migration.
 5. Keep `npm run lint` and `npm test` green.

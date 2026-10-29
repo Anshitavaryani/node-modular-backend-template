@@ -34,10 +34,14 @@ const localTimestamp = (date, timeZone) => {
   return new Date(`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}Z`);
 };
 
+// The names a zone may be stored under: as the client sent it, and as the runtime names it (Node knows Asia/Kolkata as
+// Asia/Calcutta). The seeded timezones hold both kinds.
+const zoneNames = (zone) => [...new Set([zone, new Intl.DateTimeFormat("en-US", { timeZone: zone }).resolvedOptions().timeZone])];
+
 const saveLoginTiming = async (user, tokens, ip, timezone) => {
   const zone = resolveTimeZone(timezone);
   const now = new Date();
-  const timeZoneDoc = await Timezone.findOne({ where: { time_zone: zone, is_active: true } });
+  const timeZoneDoc = await Timezone.findOne({ where: { time_zone: zoneNames(zone), is_active: true } });
   if (!timeZoneDoc) {
     logger.warn(`No matching Timezone row for "${zone}" — skipping login-timing record.`);
     return null;

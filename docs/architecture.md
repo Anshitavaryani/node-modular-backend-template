@@ -105,8 +105,12 @@ Start-up connects to Redis and the database with retries (for slow containers) a
 - MariaDB and MySQL commit schema changes immediately, so write each migration to be safe to run again after a fix.
 - The baseline migration (`20261029-0000-baseline.js`) loads `schema/baseline.sql`, the schema the models define when
   the template was made. A new database is built by migrating from empty; an existing one only records the migration.
-- Reference data is in `src/core/db/seeds/*.sql` (roles, departments, timezones). `npm run seed` loads each table only
-  while it is empty, so running it again changes nothing.
+- Reference data: `npm run seed` loads each reference table only while it is empty, so running it again changes
+  nothing. Roles, departments and categories come from `src/core/db/seeds/*.sql` (only the Super Admin and User roles
+  and the Admin department). Countries, states and cities are downloaded from the countries-states-cities dataset
+  (`GEO_DATA_URL`, `core/db/referenceData.js`); time zones are built from Node's list plus the dataset's zone names.
+  `npm run geo:update` makes an existing database match the latest dataset, and switches off (`is_active` 0,
+  `deleted_at` set) the rows the dataset dropped instead of deleting them.
 
 ## Uploads
 

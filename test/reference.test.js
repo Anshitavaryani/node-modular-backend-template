@@ -2,6 +2,7 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { start, request, ensureSuperAdmin, createAdmin, signInAdmin, close } = require('./helpers');
+const { maxLimit, defaultLimit } = require('../src/core/config/config');
 
 let superToken;
 let subAdminToken;
@@ -29,10 +30,10 @@ test('countries and states are readable without a token', async () => {
 test('list pages are capped, and a limit below 1 gives the default page', async () => {
     const huge = await request('GET', '/city?limit=200000');
     assert.equal(huge.status, 200);
-    assert.equal(huge.body.data.length, 1000);
+    assert.equal(huge.body.data.length, maxLimit);
     const negative = await request('GET', '/city?limit=-5');
     assert.equal(negative.status, 200);
-    assert.equal(negative.body.data.length, 15);
+    assert.equal(negative.body.data.length, defaultLimit);
 });
 
 test('a city and its state are readable one at a time, with their parents', async () => {

@@ -72,7 +72,7 @@ These are the starter's own open questions, or gaps found in porting. Each needs
    with the tier named in each route file (FAQ writes: editor tier; contact-us admin routes, payment totals and
    departments: admin tier; roles: super admin). Projects with other roles adjust those lists.
 4. **Self-registration roles.** Only `USR_ROLE_ID` may self-register by default (`SELF_REGISTERABLE_ROLE_IDS` adds
-   more). The role IDs are in `.env.example`; they must match the seeded rows.
+   more). The role IDs are in `.env.example`; they must match the seeded rows (now only Super Admin 1 and User 2).
 5. **Rate limits.** In production, as in the starter, every `/user/auth/*` and `/admin/auth/*` path allows 20 failed
    requests per 15 minutes per IP (successful ones are not counted). Added: the two `/otp` routes allow 10 requests per
    15 minutes per IP, successful or not, and `POST /contactUs` 10 per hour.
@@ -94,7 +94,7 @@ says, not what a running server returned.
 
 | Starter item | In the template |
 | --- | --- |
-| `roles.sql` and `departments.sql` hold example data | Open by design: each project replaces the seeds and sets the role IDs in `.env`. |
+| `roles.sql` and `departments.sql` hold example data | Closed: the seed has only the Super Admin and User roles and the Admin department; projects create the rest from the admin panel. |
 | `SP_ROLE_ID` in config with no meaning | Closed: not ported (unused). |
 | `.sequelizerc` may be missing, so `npm run migrate` fails | Closed: the template runs its own migrations (`src/core/db/migrate.js`), not `sequelize-cli`. |
 | `role.middleware.js` reads `req.user.role_id`, not cross-checked with `findRoleById` | Closed: `requireRole` reads the role of the current admin row and matches its abbreviation; tested for every tier. |
