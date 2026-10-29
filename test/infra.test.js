@@ -1,4 +1,4 @@
-// Start-up and the shared HTTP behaviour: health, the unknown-route shape, and config validation.
+// Start-up and the shared HTTP behaviour: health, the unknown-route shape, bad request bodies, and config validation.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
@@ -39,6 +39,28 @@ test('an unknown route answers 404 in the standard error shape', async () => {
         assert.equal(body.success, false);
         assert.equal(body.status, 404);
         assert.equal(typeof body.message, 'string');
+    } finally {
+        server.close();
+    }
+});
+
+test('a malformed or oversized JSON body is the client\'s error, not a 500', async () => {
+    const server = await listen();
+    try {
+        const { port } = server.address();
+        const post = (body) => fetch(`http://127.0.0.1:${port}/api/v1/contactUs/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+        });
+        const malformed = await post('{"email": "a@test.example",');
+        assert.equal(malformed.status, 400);
+        assert.deepEqual(await malformed.json(), {
+            success: false, status: 400, message: 'The request body is not valid JSON.', data: '',
+        });
+        const oversized = await post(JSON.stringify({ address: 'x'.repeat(1024 * 1024 + 1) }));
+        assert.equal(oversized.status, 413);
+        assert.equal((await oversized.json()).message, 'The request body is too large.');
     } finally {
         server.close();
     }

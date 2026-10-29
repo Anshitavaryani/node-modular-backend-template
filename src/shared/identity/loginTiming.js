@@ -14,7 +14,8 @@ const resolveTimeZone = (timeZone) => {
   }
 };
 
-// Wall-clock time in `timeZone`, as "yyyy-MM-dd HH:mm:ss".
+// Wall-clock time in `timeZone`, as a Date whose UTC fields hold it. Dates are stored in UTC, so the column gets that
+// wall-clock time whatever the server's own time zone (a "yyyy-MM-dd HH:mm:ss" string would be read in it).
 const localTimestamp = (date, timeZone) => {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
@@ -30,7 +31,7 @@ const localTimestamp = (date, timeZone) => {
       .formatToParts(date)
       .map(({ type, value }) => [type, value])
   );
-  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+  return new Date(`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}Z`);
 };
 
 const saveLoginTiming = async (user, tokens, ip, timezone) => {

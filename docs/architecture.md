@@ -23,7 +23,8 @@ src/
 
 Top level: `app.js` (the Express app: middleware, health check, routes, errors), `index.js` (starts the server, the
 database, Redis and the jobs), `scripts/` (the boundary check, the super-admin script, the database backup), `test/`
-(the test suite).
+(the test suite), `vendor/` (third-party code installed from the repo: `dottie`, which Sequelize 7 needs and npm marks
+unsupported; see `vendor/README.md`).
 
 ## A module
 
@@ -66,6 +67,11 @@ Other modules reach a module only through its `index.js`. Models come from `requ
 `src/core/config/config.js` reads `.env` (through `process.loadEnvFile`) and checks it at start-up. A missing required
 variable stops the process with a message that names it. Empty values count as unset. See `.env.example` for every
 variable and what it does.
+
+The database is reached through Sequelize 7. `CENTRAL_DB_DIALECT` picks the dialect: `mariadb` (the default, with the
+`mariadb` driver) or `mysql` (MySQL 8, with `mysql2`). `core/db/options.js` holds the connection options that the app's
+pool and the migration runner share; `core/db/dataTypes.js` holds `NumericBigInt`, the BIGINT type that keeps ids as
+numbers.
 
 ## Authentication
 

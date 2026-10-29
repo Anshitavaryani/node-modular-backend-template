@@ -1,11 +1,12 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize, DataTypes, Model } = require("@sequelize/core");
 const sequelize = require("../../../core/db/central.db");
+const { NumericBigInt } = require("../../../core/db/dataTypes");
 
 class UserLoginTiming extends Model {}
 UserLoginTiming.init(
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
       allowNull: false,
@@ -16,17 +17,17 @@ UserLoginTiming.init(
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       references: {
-        model: "roles",
+        table: "roles",
         key: "id",
       },
     },
     user_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       allowNull: false,
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       references: {
-        model: "users",
+        table: "users",
         key: "id",
       },
     },
@@ -47,11 +48,11 @@ UserLoginTiming.init(
       allowNull: true,
     },
     token_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       allowNull: true,
       onDelete: "SET NULL",
       references: {
-        model: "user_tokens",
+        table: "user_tokens",
         key: "id",
       },
     },
@@ -60,7 +61,7 @@ UserLoginTiming.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "timezones",
+        table: "timezones",
         key: "id",
       },
     },
@@ -98,7 +99,7 @@ UserLoginTiming.init(
   }
 );
 
-UserLoginTiming.beforeDestroy(async (loginTiming) => {
+UserLoginTiming.hooks.addListener("beforeDestroy", async (loginTiming) => {
   loginTiming.is_active = false;
 });
 

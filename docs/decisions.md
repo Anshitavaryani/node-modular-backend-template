@@ -18,6 +18,14 @@ seeded from the starter's SQL dumps.
 - **Tests** on a real database and Redis (`npm test`).
 - **Stripe** payment status from the webhook (outcomes and full refunds), country accounts and `DEFAULT_AMOUNT` in
   config, the SDK's own API version.
+- **Sequelize 7** (7.0.0-alpha.48, pinned exactly) instead of Sequelize 6, to drop `moment`, which only Sequelize 6
+  needed. It is still alpha: the owner chose it over waiting for the stable release. MariaDB and MySQL each get their
+  own dialect (`CENTRAL_DB_DIALECT`). Two Sequelize 7 defaults are turned back to the starter's behaviour, so the API
+  does not change: BIGINT ids are numbers, not strings (`NumericBigInt`), and values are not type-checked against
+  their columns (`noTypeValidation`); requests are validated before the database instead.
+- **`dottie` vendored.** Sequelize 7 requires `dottie`, and npm marks every published version "no longer supported", so
+  installing printed a deprecation warning. Version 2.0.7 is kept unchanged in `vendor/dottie` (MIT) and installed from
+  there (`overrides` in `package.json`). Remove it when Sequelize stops requiring it.
 
 ## Fixed while porting
 

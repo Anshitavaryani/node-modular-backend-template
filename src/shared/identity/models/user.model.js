@@ -1,11 +1,12 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize, DataTypes, Model } = require("@sequelize/core");
 const sequelize = require("../../../core/db/central.db");
+const { NumericBigInt } = require("../../../core/db/dataTypes");
 
 class User extends Model {}
 User.init(
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -23,7 +24,7 @@ User.init(
       onDelete: "RESTRICT",
       onUpdate: "CASCADE",
       references: {
-        model: "roles",
+        table: "roles",
         key: "id",
       },
     },
@@ -108,7 +109,7 @@ User.init(
 
 // Runs inside the creating transaction when there is one: a save outside it would wait on the row lock that
 // transaction holds.
-User.afterCreate(async (user, options) => {
+User.hooks.addListener("afterCreate", async (user, options) => {
   user.socket_id = `${user.role_id}-${user.id}-socketId`;
   user.user_name = await generateUniqueUserName(user.email, user.role_id);
   await user.save({ transaction: options.transaction });
@@ -144,7 +145,7 @@ User.isUserNameTaken = async function (user_name, role_id) {
   return !!u;
 };
 
-User.beforeDestroy(async (user) => {
+User.hooks.addListener("beforeDestroy", async (user) => {
   user.is_active = false;
 });
 

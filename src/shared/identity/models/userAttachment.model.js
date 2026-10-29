@@ -1,11 +1,12 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize, DataTypes, Model } = require("@sequelize/core");
 const sequelize = require("../../../core/db/central.db");
+const { NumericBigInt } = require("../../../core/db/dataTypes");
 
 class UserAttachment extends Model {}
 UserAttachment.init(
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -15,17 +16,17 @@ UserAttachment.init(
       onDelete: "RESTRICT",
       onUpdate: "CASCADE",
       references: {
-        model: "roles",
+        table: "roles",
         key: "id",
       },
     },
     user_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       allowNull: false,
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       references: {
-        model: "users",
+        table: "users",
         key: "id",
       },
     },
@@ -79,7 +80,7 @@ UserAttachment.init(
   }
 );
 
-UserAttachment.beforeDestroy(async (userAttachment) => {
+UserAttachment.hooks.addListener("beforeDestroy", async (userAttachment) => {
   userAttachment.is_active = false;
 });
 

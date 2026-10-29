@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class Role extends Model {}
@@ -26,7 +26,7 @@ Role.init({
     deletedAt: 'deleted_at',
 });
 
-Role.beforeDestroy(async (role) => {
+Role.hooks.addListener('beforeDestroy', async (role) => {
     role.is_active = false;
 });
 

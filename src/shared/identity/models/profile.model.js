@@ -1,21 +1,22 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize, DataTypes, Model } = require("@sequelize/core");
 const sequelize = require("../../../core/db/central.db");
+const { NumericBigInt } = require("../../../core/db/dataTypes");
 
 class Profile extends Model {}
 Profile.init(
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },
     user_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       allowNull: true,
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       references: {
-        model: "users",
+        table: "users",
         key: "id",
       },
     },
@@ -77,7 +78,7 @@ Profile.init(
   }
 );
 
-Profile.beforeDestroy(async (profile) => {
+Profile.hooks.addListener("beforeDestroy", async (profile) => {
   profile.is_active = false;
 });
 

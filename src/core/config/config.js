@@ -42,6 +42,8 @@ envVars.REDIS_PORT = number('REDIS_PORT', 6379);
 envVars.REDIS_DB = number('REDIS_DB', 0);
 envVars.DEFAULT_AMOUNT = number('DEFAULT_AMOUNT', 5);
 envVars.BACKUP_RETENTION_DAYS = number('BACKUP_RETENTION_DAYS', 14);
+envVars.CENTRAL_DB_DIALECT ??= 'mariadb';
+if (!['mariadb', 'mysql'].includes(envVars.CENTRAL_DB_DIALECT)) fail('CENTRAL_DB_DIALECT must be mariadb or mysql');
 envVars.MAIL_TRANSPORT ??= 'smtp';
 if (!['smtp', 'log'].includes(envVars.MAIL_TRANSPORT)) fail('MAIL_TRANSPORT must be smtp or log');
 envVars.DEFAULT_TIMEZONE ??= 'UTC';
@@ -59,6 +61,7 @@ module.exports = {
     port: envVars.PORT,
     databases: {
         central: {
+            dialect: envVars.CENTRAL_DB_DIALECT,
             db: envVars.CENTRAL_MYSQL_DB,
             port: envVars.CENTRAL_MYSQL_PORT,
             host: envVars.CENTRAL_MYSQL_HOST,

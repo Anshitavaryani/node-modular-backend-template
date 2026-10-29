@@ -1,24 +1,12 @@
-const { Sequelize } = require('sequelize');
+const { Sequelize } = require('@sequelize/core');
 const config = require('../config/config');
 const logger = require('../logger');
+const { sequelizeOptions } = require('./options');
 
-const sequelize = new Sequelize(
-    config.databases.central.db,
-    config.databases.central.user,
-    config.databases.central.passwd,
-    {
-        host: config.databases.central.host,
-        port: config.databases.central.port,
-        dialect: 'mysql',
-        supportBigNumbers: true,
-        // JSON columns are text in MariaDB; keep them as strings, as the code expects.
-        dialectOptions: { jsonStrings: true, charset: 'utf8mb4' },
-        collate: 'utf8mb4_unicode_ci',
-        timezone: '+00:00', // store and read dates in UTC, whatever the server's time zone
-        pool: { max: 10, min: 0, idle: 10000, acquire: 30000, evict: 15000 },
-        logging: config.env === 'development' ? (message) => logger.debug(message) : false,
-    },
-);
+const sequelize = new Sequelize(sequelizeOptions({
+    pool: { max: 10, min: 0, idle: 10000, acquire: 30000, evict: 15000 },
+    logging: config.env === 'development' ? (message) => logger.debug(message) : false,
+}));
 
 // Checked once at start-up by index.js (retrying while the database container boots).
 const connect = async ({ attempts = 5, delayMs = 3000 } = {}) => {

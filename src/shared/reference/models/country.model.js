@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class Country extends Model {}
@@ -50,7 +50,7 @@ Country.init({
 });
 
 // Deleting a country deactivates it too, so inactive rows stay hidden from the list and lookup routes.
-Country.beforeDestroy(async (country) => {
+Country.hooks.addListener('beforeDestroy', async (country) => {
     country.is_active = false;
 });
 

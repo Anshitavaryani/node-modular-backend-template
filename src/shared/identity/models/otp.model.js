@@ -1,5 +1,6 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize, DataTypes, Model } = require("@sequelize/core");
 const sequelize = require("../../../core/db/central.db");
+const { NumericBigInt } = require("../../../core/db/dataTypes");
 
 class OTP extends Model {}
 OTP.init(
@@ -19,17 +20,17 @@ OTP.init(
       onDelete: "RESTRICT",
       onUpdate: "CASCADE",
       references: {
-        model: "roles",
+        table: "roles",
         key: "id",
       },
     },
     user_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       allowNull: true,
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       references: {
-        model: "users",
+        table: "users",
         key: "id",
       },
     },
@@ -94,13 +95,13 @@ OTP.init(
 );
 
 // Every OTP lives five minutes from its last validation (creation or save).
-OTP.beforeValidate(async (otp) => {
+OTP.hooks.addListener("beforeValidate", async (otp) => {
   const expirationTime = new Date();
   expirationTime.setMinutes(expirationTime.getMinutes() + 5);
   otp.otp_expiration_time = expirationTime;
 });
 
-OTP.beforeDestroy(async (otp) => {
+OTP.hooks.addListener("beforeDestroy", async (otp) => {
   otp.is_active = false;
 });
 

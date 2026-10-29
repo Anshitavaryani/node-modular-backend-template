@@ -17,8 +17,9 @@ const run = async ({ database, log = console.log } = {}) => {
     const sequelize = connect(database);
     try {
         for (const table of TABLES) {
+            // Raw queries return BIGINT results, such as a count, as strings.
             const [[{ count }]] = await sequelize.query(`SELECT COUNT(*) AS count FROM \`${table}\``);
-            if (count > 0) {
+            if (Number(count) > 0) {
                 log(`skipped  ${table} (already has ${count} rows)`);
                 continue;
             }

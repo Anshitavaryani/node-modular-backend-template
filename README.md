@@ -9,8 +9,8 @@ Read `CLAUDE.md` first: it is the reference for the layout, the module rules, ev
 `docs/architecture.md` covers the layout in more depth, `docs/decisions.md` and `docs/porting-notes.md` record what
 changed from the starter, and `HANDOFF.md` lists what is done and what is left.
 
-Versions: Node.js 24 or later (the Docker image uses Node 26 LTS), Express 5, Sequelize 6, MariaDB 12.3 LTS (or MySQL 8),
-Redis 8, Stripe SDK 23.
+Versions: Node.js 24 or later (the Docker image uses Node 26 LTS), Express 5, Sequelize 7 (`@sequelize/core`, pinned at
+7.0.0-alpha.48), MariaDB 12.3 LTS (or MySQL 8), Redis 8, Stripe SDK 23.
 
 ## What is in the box
 
@@ -51,8 +51,8 @@ docker compose exec mysql sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" -e "G
 
 ## Run it on your machine
 
-You need Node 24 or later, MariaDB 10.11 or later (or MySQL 8), and Redis 7 or later (`docker compose up -d mysql redis`
-starts the two services).
+You need Node 24 or later, MariaDB 10.11 or later (or MySQL 8, with `CENTRAL_DB_DIALECT=mysql` in `.env`), and Redis 7 or
+later (`docker compose up -d mysql redis` starts the two services).
 
 ```bash
 cp .env.example .env              # CENTRAL_MYSQL_HOST and REDIS_HOST default to localhost

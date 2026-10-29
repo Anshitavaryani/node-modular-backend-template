@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const slugify = require('slugify');
 const sequelize = require('../../../core/db/central.db');
 
@@ -29,11 +29,11 @@ Category.init({
 });
 
 // The slug is derived from the title on every validation.
-Category.beforeValidate((category) => {
+Category.hooks.addListener('beforeValidate', (category) => {
     if (category.title) category.slug = slugify(category.title, { lower: true });
 });
 
-Category.beforeDestroy((category) => {
+Category.hooks.addListener('beforeDestroy', (category) => {
     category.is_active = false;
 });
 

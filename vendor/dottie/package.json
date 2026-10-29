@@ -1,0 +1,7 @@
+{
+  "name": "dottie",
+  "version": "2.0.7",
+  "description": "dottie 2.0.7 (MIT, github.com/mickhansen/dottie.js), kept here unchanged: Sequelize 7 needs it, and npm marks the published package unsupported. See vendor/README.md.",
+  "main": "dottie.js",
+  "license": "MIT"
+}

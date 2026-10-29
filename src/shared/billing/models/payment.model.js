@@ -1,12 +1,13 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
+const { NumericBigInt } = require('../../../core/db/dataTypes');
 const config = require('../../../core/config/config');
 
 class Payment extends Model {}
 Payment.init(
     {
         id: {
-            type: DataTypes.BIGINT.UNSIGNED,
+            type: NumericBigInt.UNSIGNED,
             autoIncrement: true,
             primaryKey: true,
         },
@@ -15,17 +16,16 @@ Payment.init(
             allowNull: false,
         },
         currency: {
-            type: DataTypes.ENUM,
-            values: ['CHF', 'EUR', 'INR', 'KYD', 'OMR', 'USD'],
+            type: DataTypes.ENUM(['CHF', 'EUR', 'INR', 'KYD', 'OMR', 'USD']),
             defaultValue: 'USD',
         },
         user_id: {
-            type: DataTypes.BIGINT.UNSIGNED,
+            type: NumericBigInt.UNSIGNED,
             allowNull: true,
             onDelete: 'SET NULL',
             onUpdate: 'CASCADE',
             references: {
-                model: 'users',
+                table: 'users',
                 key: 'id',
             },
         },
@@ -84,7 +84,7 @@ Payment.init(
     },
 );
 
-Payment.beforeDestroy((payment) => {
+Payment.hooks.addListener('beforeDestroy', (payment) => {
     payment.is_active = false;
 });
 

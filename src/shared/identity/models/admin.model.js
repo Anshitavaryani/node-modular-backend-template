@@ -1,11 +1,12 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize, DataTypes, Model } = require("@sequelize/core");
 const sequelize = require("../../../core/db/central.db");
+const { NumericBigInt } = require("../../../core/db/dataTypes");
 
 class Admin extends Model {}
 Admin.init(
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -15,7 +16,7 @@ Admin.init(
       onDelete: "RESTRICT",
       onUpdate: "CASCADE",
       references: {
-        model: "roles",
+        table: "roles",
         key: "id",
       },
     },
@@ -25,7 +26,7 @@ Admin.init(
       onDelete: "RESTRICT",
       onUpdate: "CASCADE",
       references: {
-        model: "departments",
+        table: "departments",
         key: "id",
       },
     },
@@ -101,7 +102,7 @@ Admin.init(
 );
 
 // Saves inside the creating transaction, if any (see the User model).
-Admin.afterCreate(async (admin, options) => {
+Admin.hooks.addListener("afterCreate", async (admin, options) => {
   admin.socket_id = `${admin.role_id}-${admin.id}-${admin.department_id}-socketId`;
   await admin.save({ transaction: options.transaction });
 });
@@ -112,7 +113,7 @@ Admin.isEmailTaken = async function (email) {
   return !!u;
 };
 
-Admin.beforeDestroy(async (admin) => {
+Admin.hooks.addListener("beforeDestroy", async (admin) => {
   admin.is_active = false;
 });
 

@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class ContactUs extends Model {}
@@ -52,7 +52,7 @@ ContactUs.init(
     },
 );
 
-ContactUs.beforeDestroy((contactUs) => {
+ContactUs.hooks.addListener('beforeDestroy', (contactUs) => {
     contactUs.is_active = false;
 });
 

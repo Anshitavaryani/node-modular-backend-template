@@ -1,7 +1,7 @@
 # Reference for this repo (read first)
 
 This repo is a **modular backend template** for any project that uses **Node.js 24+ (Docker: Node 26 LTS), Express 5,
-MariaDB/MySQL (Sequelize), Redis and Docker**. It is the modular version of `node-starter-2` (the starter), with all the starter's
+MariaDB/MySQL (Sequelize 7), Redis and Docker**. It is the modular version of `node-starter-2` (the starter), with all the starter's
 features kept, and it is the starting point for new projects. Nothing in it belongs to one product: keep project names,
 products and business rules out of `src/core/` and `src/shared/`. A project adds its own modules under `src/admin/`,
 `src/field/` or new product folders, and keeps `src/core/` as it is. `HANDOFF.md` lists what is done and what is left.
@@ -56,8 +56,8 @@ In production every `/user/auth/*` and `/admin/auth/*` path is rate limited per 
 - Success: `{ "success": true, "status": 200, "message": "...", "data": ... }`.
 - Error: `{ "success": false, "status": 4xx, "message": "...", "data": "" }`, with an optional `code` and `details`.
   Errors are thrown as `ApiError` (`src/core/http/ApiError.js`) and formatted by `errorHandler`. A database constraint
-  (duplicate, model validation, value too long) is a 400 with the field names in `details`. Anything else is logged and
-  returned as a generic 500.
+  (duplicate, model validation, value too long) is a 400 with the field names in `details`. A body that is not valid
+  JSON is a 400, one over 1 MB a 413. Anything else is logged and returned as a generic 500.
 - Tokens: send `x-access-token: <token>`. A user gets it from `POST /user/auth/login` in `data.tokens.access.token`; an
   admin from `POST /admin/auth/login` in `data.token`. An admin token carries `scope: admin`; a user token is refused on
   admin routes. An admin token stops working when that admin's password changes; a user's password change ends that
@@ -82,6 +82,7 @@ src/modules.js   the modules, in mount order
 src/routes.js    mounts each module's routes under /api/v1
 src/jobs.js      cron jobs that modules declare (JOBS_ENABLED=false turns them off)
 app.js, index.js the Express app and the entrypoint
+vendor/          third-party code kept in the repo, installed through package.json (see vendor/README.md)
 ```
 
 A module is `src/<product>/<module>/` with `*.route.js`, `*.controller.js`, `*.service.js`, `models/` (one file per
@@ -104,7 +105,15 @@ run `npm run lint` and `npm test`.
 
 ## Database
 
-- MariaDB 12.3 LTS (the Docker image) or MySQL 8 (utf8mb4). Dates are stored and read in UTC.
+- MariaDB 12.3 LTS (the Docker image; 10.11 works) or MySQL 8 (set `CENTRAL_DB_DIALECT=mysql`), utf8mb4. Dates are
+  stored and read in UTC.
+- Sequelize 7 (`@sequelize/core` with `@sequelize/mariadb` or `@sequelize/mysql`). It is still alpha, so the version is
+  pinned exactly; read its release notes before moving it. Connection options are in `src/core/db/options.js`.
+- Models, Sequelize 7 style: BIGINT ids and the columns that point at them use `NumericBigInt`
+  (`src/core/db/dataTypes.js`), so ids stay numbers in responses; hooks are `Model.hooks.addListener('beforeDestroy',
+  fn)`; a foreign key column has `references: { table: 'users', key: 'id' }`; enum values go in `DataTypes.ENUM([...])`;
+  a database error's driver error is `err.cause`. Raw `sequelize.query` results give BIGINT values (such as `COUNT(*)`)
+  as strings.
 - Schema changes are **migrations** in `src/core/db/migrations/` (`YYYYMMDD-HHMM-name.js`, exporting `up` and `down`).
   Never edit an applied migration; add a new one. `npm run migrate`, `migrate:status`, `migrate:down`.
 - The baseline migration loads `src/core/db/schema/baseline.sql` into an empty database. Existing databases only
@@ -138,7 +147,7 @@ Docker: `docker compose up -d --build` starts MariaDB, Redis, phpMyAdmin and the
 ## Environment (see `.env.example`)
 
 Required: `APP_NAME`, `NODE_ENV`, `CENTRAL_MYSQL_HOST`, `CENTRAL_MYSQL_USER`, `CENTRAL_MYSQL_DB`, `JWT_SECRET` (32+
-characters in production), `USR_ROLE_ID`. Also used: `CENTRAL_MYSQL_PASSWORD`, `CENTRAL_MYSQL_PORT`, `REDIS_HOST`,
+characters in production), `USR_ROLE_ID`. Also used: `CENTRAL_DB_DIALECT` (`mariadb` or `mysql`), `CENTRAL_MYSQL_PASSWORD`, `CENTRAL_MYSQL_PORT`, `REDIS_HOST`,
 `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`, `REDIS_KEY_PREFIX`, `ACCESS_TOKEN_MINUTES`, `REFRESH_TOKEN_DAYS`,
 `ADMIN_TOKEN_HOURS`, `SELF_REGISTERABLE_ROLE_IDS`, `ACCESSDOMAINS` (CORS origins), `MAIL_TRANSPORT` (`smtp` or `log`),
 `SMTP_*`, `EMAIL_FROM`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DEFAULT_AMOUNT`,

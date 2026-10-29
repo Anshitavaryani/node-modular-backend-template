@@ -1,7 +1,7 @@
 // Stripe accounts, customers and payment intents, the webhook (signature check and payment status), and today's
 // payments.
 const Stripe = require('stripe');
-const { Op } = require('sequelize');
+const { Op } = require('@sequelize/core');
 const config = require('../../core/config/config');
 const ApiError = require('../../core/http/ApiError');
 const httpStatus = require('../../core/http/status');
@@ -20,7 +20,7 @@ const METHOD_ACCOUNTS = {
 
 // The currencies a payment may use (the payments.currency enum), and how many minor units make one unit. Stripe takes
 // amounts in minor units; OMR has three decimals.
-const CURRENCIES = Payment.getAttributes().currency.values;
+const CURRENCIES = Payment.getAttributes().currency.type.options.values;
 const MINOR_UNITS = { OMR: 1000 };
 
 // Keys for a payment method: its country account when that account is set up, otherwise the main account.

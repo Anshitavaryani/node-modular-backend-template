@@ -2,6 +2,8 @@
 FROM node:26-trixie-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# Vendored packages that package.json installs from the repo (vendor/README.md).
+COPY vendor ./vendor
 RUN npm ci --omit=dev --no-audit --no-fund
 
 FROM node:26-trixie-slim

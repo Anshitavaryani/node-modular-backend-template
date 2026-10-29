@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class Department extends Model {}
@@ -25,7 +25,7 @@ Department.init({
     deletedAt: 'deleted_at',
 });
 
-Department.beforeDestroy(async (department) => {
+Department.hooks.addListener('beforeDestroy', async (department) => {
     department.is_active = false;
 });
 

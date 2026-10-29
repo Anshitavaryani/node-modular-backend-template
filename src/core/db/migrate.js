@@ -10,8 +10,8 @@
 // keep each one small, and write `up` so it can run again after a fix (check before adding or renaming).
 const fs = require('fs');
 const path = require('path');
-const { Sequelize } = require('sequelize');
-const config = require('../config/config');
+const { Sequelize } = require('@sequelize/core');
+const { sequelizeOptions } = require('./options');
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 const LOCK = 'app_schema_migrations';
@@ -20,24 +20,18 @@ const migrationFiles = () =>
     fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.js')).toSorted();
 
 // One connection for the whole run: the lock and session settings (foreign key checks) are per connection.
-const connect = (database) => {
-    const { host, port, db, user, passwd } = config.databases.central;
-    return new Sequelize(database || db, user, passwd, {
-        host, port, dialect: 'mysql', logging: false, pool: { max: 1, min: 1 },
-        dialectOptions: { jsonStrings: true },
-    });
-};
+const connect = (database) => new Sequelize(sequelizeOptions({ database, pool: { max: 1, min: 1 } }));
 
 const run = async (command = 'up', { database, log = console.log } = {}) => {
     const sequelize = connect(database);
-    const context = { queryInterface: sequelize.getQueryInterface(), sequelize, Sequelize, log };
+    const context = { queryInterface: sequelize.queryInterface, sequelize, Sequelize, log };
     try {
         await sequelize.query(
             'CREATE TABLE IF NOT EXISTS schema_migrations (name VARCHAR(255) NOT NULL PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)',
         );
         // One runner at a time, e.g. two deploys starting together.
         const [[{ locked }]] = await sequelize.query(`SELECT GET_LOCK('${LOCK}', 60) AS locked`);
-        if (locked !== 1) throw new Error('Another migration run holds the lock');
+        if (Number(locked) !== 1) throw new Error('Another migration run holds the lock');
 
         const [rows] = await sequelize.query('SELECT name FROM schema_migrations ORDER BY name');
         const applied = new Set(rows.map((r) => r.name));

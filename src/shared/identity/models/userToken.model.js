@@ -1,11 +1,12 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize, DataTypes, Model } = require("@sequelize/core");
 const sequelize = require("../../../core/db/central.db");
+const { NumericBigInt } = require("../../../core/db/dataTypes");
 
 class UserToken extends Model {}
 UserToken.init(
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -15,17 +16,17 @@ UserToken.init(
       onDelete: "RESTRICT",
       onUpdate: "CASCADE",
       references: {
-        model: "roles",
+        table: "roles",
         key: "id",
       },
     },
     user_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: NumericBigInt.UNSIGNED,
       allowNull: false,
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       references: {
-        model: "users",
+        table: "users",
         key: "id",
       },
     },
@@ -75,7 +76,7 @@ UserToken.init(
   }
 );
 
-UserToken.beforeDestroy(async (userToken) => {
+UserToken.hooks.addListener("beforeDestroy", async (userToken) => {
   userToken.is_active = false;
 });
 

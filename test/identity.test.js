@@ -7,7 +7,7 @@ const path = require('node:path');
 const { start, apiUrl, request, ensureSuperAdmin, latestCode, createAdmin, signInAdmin, signUpUser, close } = require('./helpers');
 const { UPLOADS_DIR } = require('../src/core/config/paths');
 const redis = require('../src/core/redis/redis');
-const { Admin, User } = require('../src/models');
+const { Admin, User, UserLoginTiming } = require('../src/models');
 
 const USER = { name: 'Ann Test', email: 'ann.identity@test.example', mobile: '9999900001', password: 'Passw0rd12', confirm_password: 'Passw0rd12' };
 const USER_ROLE = { 'role_id': '6' };
@@ -59,6 +59,18 @@ test('sign-in returns access tokens once the email is verified', async () => {
     assert.equal(res.status, 200);
     userToken = res.body.data.tokens.access.token;
     assert.ok(userToken);
+    assert.equal(typeof res.body.data.id, 'number', 'ids are numbers, as the starter returned them');
+});
+
+test('sign-in records the login time in UTC and in the time zone the client sends', async () => {
+    const user = { name: 'Kai Zone', email: 'kai.zone@test.example', mobile: '9999900015', password: 'Passw0rd12' };
+    await signUpUser(user);
+    const res = await request('POST', '/user/auth/login', { body: { email: user.email, password: user.password }, headers: { timezone: 'Asia/Kolkata' } });
+    assert.equal(res.status, 200);
+    const timing = await UserLoginTiming.findOne({ where: { user_id: res.body.data.id }, order: [['id', 'DESC']] });
+    assert.ok(timing, 'a login timing was recorded');
+    // Kolkata is UTC+5:30 all year, whatever the time zone of the machine running the tests.
+    assert.equal(timing.login_time_local - timing.login_time_utc, 330 * 60 * 1000);
 });
 
 test('the profile needs a token and returns the signed-in user', async () => {
@@ -100,6 +112,7 @@ test('a super admin creates an admin; an ordinary admin cannot', async () => {
         body: { name: 'Ops Admin', email: 'ops.admin@test.example', password: 'Passw0rd#Ops1', confirm_password: 'Passw0rd#Ops1', role_id: 2, department_id: 2 },
     });
     assert.equal(created.status, 201);
+    assert.equal(typeof created.body.data.id, 'number', 'a new row\'s id is a number, not a BigInt');
     const weak = await request('POST', '/admin/auth/register', {
         token: superToken,
         body: { name: 'Weak', email: 'weak.admin@test.example', password: 'weakpass1', confirm_password: 'weakpass1', role_id: 2, department_id: 2 },

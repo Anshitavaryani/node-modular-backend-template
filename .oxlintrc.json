@@ -12,5 +12,5 @@
     "no-undef": "error",
     "no-unused-vars": ["warn", { "args": "none", "caughtErrors": "none" }]
   },
-  "ignorePatterns": ["node_modules/**", "storage/**", "coverage/**"]
+  "ignorePatterns": ["node_modules/**", "storage/**", "coverage/**", "vendor/**"]
 }

@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class City extends Model {}
@@ -11,7 +11,7 @@ City.init({
         allowNull: true,
         onDelete: 'RESTRICT',
         onUpdate: 'CASCADE',
-        references: { model: 'countries', key: 'id' },
+        references: { table: 'countries', key: 'id' },
     },
     country_code: { type: DataTypes.CHAR(2), allowNull: false, collate: 'utf8mb4_unicode_ci' },
     state_id: {
@@ -19,7 +19,7 @@ City.init({
         allowNull: true,
         onDelete: 'SET NULL',
         onUpdate: 'CASCADE',
-        references: { model: 'states', key: 'id' },
+        references: { table: 'states', key: 'id' },
     },
     state_code: { type: DataTypes.STRING(255), allowNull: false, collate: 'utf8mb4_unicode_ci' },
     latitude: { type: DataTypes.DECIMAL(10, 8), allowNull: false },
@@ -43,7 +43,7 @@ City.init({
     deletedAt: 'deleted_at',
 });
 
-City.beforeDestroy(async (city) => {
+City.hooks.addListener('beforeDestroy', async (city) => {
     city.is_active = false;
 });
 

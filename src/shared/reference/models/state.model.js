@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class State extends Model {}
@@ -11,7 +11,7 @@ State.init({
         allowNull: true,
         onDelete: 'RESTRICT',
         onUpdate: 'CASCADE',
-        references: { model: 'countries', key: 'id' },
+        references: { table: 'countries', key: 'id' },
     },
     country_code: { type: DataTypes.CHAR(2), allowNull: false, collate: 'utf8mb4_unicode_ci' },
     fips_code: { type: DataTypes.STRING(255), collate: 'utf8mb4_unicode_ci' },
@@ -40,7 +40,7 @@ State.init({
     deletedAt: 'deleted_at',
 });
 
-State.beforeDestroy(async (state) => {
+State.hooks.addListener('beforeDestroy', async (state) => {
     state.is_active = false;
 });
 

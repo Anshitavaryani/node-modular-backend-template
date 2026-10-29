@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class Faq extends Model {}
@@ -59,7 +59,7 @@ Faq.init(
     },
 );
 
-Faq.beforeDestroy((faq) => {
+Faq.hooks.addListener('beforeDestroy', (faq) => {
     faq.is_active = false;
 });
 

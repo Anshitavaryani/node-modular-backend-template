@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require('@sequelize/core');
 const sequelize = require('../../../core/db/central.db');
 
 class Timezone extends Model {}
@@ -31,7 +31,7 @@ Timezone.init({
     deletedAt: 'deleted_at',
 });
 
-Timezone.beforeDestroy(async (timezone) => {
+Timezone.hooks.addListener('beforeDestroy', async (timezone) => {
     timezone.is_active = false;
 });
 
