@@ -1,5 +1,6 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 const sequelize = require('../../../core/db/central.db');
+const config = require('../../../core/config/config');
 
 class Payment extends Model {}
 Payment.init(
@@ -32,7 +33,7 @@ Payment.init(
         amount: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            defaultValue: Number(process.env.DEFAULT_AMOUNT) || 5,
+            defaultValue: config.stripe.defaultAmount * 100,
         },
         stripe_customer_id: {
             type: DataTypes.STRING,

@@ -1,9 +1,11 @@
 const httpStatus = require('../../core/http/status');
 const catchAsync = require('../../core/http/catchAsync');
 const responseWrapper = require('../../core/http/responseWrapper');
+const requireFields = require('../../core/utils/requireFields');
 const roleService = require('./role.service');
 
 const createRole = catchAsync(async (req, res) => {
+    requireFields(req.body, ['name', 'abbreviation']);
     const created = await roleService.createRole(req.body);
     return responseWrapper(res, created, 'New Role Created Successfully.', httpStatus.CREATED);
 });

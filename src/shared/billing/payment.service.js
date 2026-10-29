@@ -1,4 +1,5 @@
-// Stripe accounts, customers and payment intents, the webhook signature check, and today's payments.
+// Stripe accounts, customers and payment intents, the webhook (signature check and payment status), and today's
+// payments.
 const Stripe = require('stripe');
 const { Op } = require('sequelize');
 const config = require('../../core/config/config');
@@ -7,55 +8,48 @@ const httpStatus = require('../../core/http/status');
 const logger = require('../../core/logger');
 const { models: { Payment } } = require('./models');
 
-const STRIPE_API_VERSION = '2022-11-15';
-const DEFAULT_AMOUNT = Number(process.env.DEFAULT_AMOUNT) || 5;
-
-const stripeClient = (secretKey) => new Stripe(secretKey, { apiVersion: STRIPE_API_VERSION });
-
-// Payment methods that need another country's Stripe account. Those accounts' keys are read from the environment
-// (they are not in config.js).
-const getKeys = (paymentMethod) => {
-    let secret_key = config.STRIPE_SECRET_KEY;
-    let publishable_key = config.STRIPE_PUBLISHABLE_KEY;
-
-    switch (paymentMethod) {
-        case 'grabpay':
-        case 'fpx':
-            publishable_key = process.env.STRIPE_PUBLISHABLE_KEY_MY;
-            secret_key = process.env.STRIPE_SECRET_KEY_MY;
-            break;
-        case 'au_becs_debit':
-            publishable_key = process.env.STRIPE_PUBLISHABLE_KEY_AU;
-            secret_key = process.env.STRIPE_SECRET_KEY_AU;
-            break;
-        case 'oxxo':
-            publishable_key = process.env.STRIPE_PUBLISHABLE_KEY_MX;
-            secret_key = process.env.STRIPE_SECRET_KEY_MX;
-            break;
-        case 'wechat_pay':
-            publishable_key = process.env.STRIPE_PUBLISHABLE_KEY_WECHAT;
-            secret_key = process.env.STRIPE_SECRET_KEY_WECHAT;
-            break;
-        case 'paypal':
-            publishable_key = process.env.STRIPE_PUBLISHABLE_KEY_UK;
-            secret_key = process.env.STRIPE_SECRET_KEY_UK;
-            break;
-        default:
-            break;
-    }
-
-    return { secret_key, publishable_key };
+// Payment methods served by another country's Stripe account (config.stripe.accounts).
+const METHOD_ACCOUNTS = {
+    grabpay: 'MY',
+    fpx: 'MY',
+    au_becs_debit: 'AU',
+    oxxo: 'MX',
+    wechat_pay: 'WECHAT',
+    paypal: 'UK',
 };
 
-// The user's Stripe customer: created on first use and kept on the user's row.
-const getCustomer = async (user, paymentMethod) => {
-    const { secret_key } = getKeys(paymentMethod);
-    const stripe = stripeClient(secret_key);
+// The currencies a payment may use (the payments.currency enum), and how many minor units make one unit. Stripe takes
+// amounts in minor units; OMR has three decimals.
+const CURRENCIES = Payment.getAttributes().currency.values;
+const MINOR_UNITS = { OMR: 1000 };
 
+// Keys for a payment method: its country account when that account is set up, otherwise the main account.
+const getKeys = (paymentMethod) => {
+    const account = config.stripe.accounts[METHOD_ACCOUNTS[paymentMethod]];
+    const keys = account?.secretKey ? account : config.stripe;
+    return { secret_key: keys.secretKey, publishable_key: keys.publishableKey };
+};
+
+// One client per account. No apiVersion is set: each SDK release pins the Stripe API version it was built for, so
+// upgrading the stripe package upgrades the API with it.
+const clients = new Map();
+const stripeClient = (secretKey) => {
+    if (!secretKey) throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Payments are not configured.');
+    if (!clients.has(secretKey)) clients.set(secretKey, new Stripe(secretKey));
+    return clients.get(secretKey);
+};
+
+// The user's Stripe customer: created on first use and kept on the user's row. A customer deleted in Stripe, or one
+// that belongs to another account, is replaced.
+const getCustomer = async (user, stripe) => {
     if (user.stripe_customer_id) {
-        return stripe.customers.retrieve(user.stripe_customer_id);
+        try {
+            const existing = await stripe.customers.retrieve(user.stripe_customer_id);
+            if (!existing.deleted) return existing;
+        } catch (error) {
+            if (error.code !== 'resource_missing') throw error;
+        }
     }
-
     const customer = await stripe.customers.create({
         name: user.user_profile?.name,
         email: user.email,
@@ -67,21 +61,36 @@ const getCustomer = async (user, paymentMethod) => {
     return customer;
 };
 
-// Creates the Stripe payment intent and its payments row. Amounts are in cents.
+// Checks the amount (whole units; DEFAULT_AMOUNT when none is sent) and the currency before anything reaches Stripe.
+const chargeFor = (amount, currency) => {
+    const units = amount === undefined || amount === null || amount === '' ? config.stripe.defaultAmount : Number(amount);
+    if (!Number.isInteger(units) || units <= 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'amount must be a whole number greater than 0.');
+    }
+    const code = String(currency || 'USD').toUpperCase();
+    if (!CURRENCIES.includes(code)) {
+        throw new ApiError(httpStatus.BAD_REQUEST, `currency must be one of ${CURRENCIES.join(', ')}.`);
+    }
+    return { amount: units * (MINOR_UNITS[code] || 100), currency: code };
+};
+
+// Creates the Stripe payment intent and its payments row (status PENDING until the webhook reports the outcome).
 const createPaymentIntent = async ({ user, paymentMethod, amount, currency, description }) => {
+    const charge = chargeFor(amount, currency);
     const { publishable_key, secret_key } = getKeys(paymentMethod);
     const stripe = stripeClient(secret_key);
-
-    const customer = await getCustomer(user, paymentMethod);
-    const chargeAmount = (parseInt(amount, 10) || DEFAULT_AMOUNT) * 100;
-    const chargeCurrency = currency || 'USD';
+    const customer = await getCustomer(user, stripe);
 
     const paymentIntent = await stripe.paymentIntents.create({
         customer: customer.id,
-        amount: chargeAmount,
-        currency: chargeCurrency,
-        payment_method_types: [paymentMethod || 'card'],
+        amount: charge.amount,
+        currency: charge.currency.toLowerCase(),
+        // A named method is used as asked; otherwise Stripe offers the methods switched on in its dashboard.
+        ...(paymentMethod
+            ? { payment_method_types: [paymentMethod] }
+            : { automatic_payment_methods: { enabled: true } }),
         metadata: {
+            user_id: String(user.id),
             name: user.user_profile?.name,
             user_name: user.user_name,
             email: user.email,
@@ -90,8 +99,8 @@ const createPaymentIntent = async ({ user, paymentMethod, amount, currency, desc
 
     const payment = await Payment.create({
         transaction_id: paymentIntent.id,
-        amount: chargeAmount,
-        currency: chargeCurrency,
+        amount: charge.amount,
+        currency: charge.currency,
         description,
         user_id: user.id,
         stripe_customer_id: customer.id,
@@ -109,14 +118,41 @@ const createPaymentIntent = async ({ user, paymentMethod, amount, currency, desc
 
 // Checks Stripe's signature over the raw request bytes and returns the event; a mismatch is a 400.
 const constructWebhookEvent = (rawBody, signature) => {
-    if (!config.STRIPE_WEBHOOK_SECRET) throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Stripe webhooks are not configured.');
+    if (!config.stripe.webhookSecret) throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Stripe webhooks are not configured.');
     try {
-        const stripe = stripeClient(getKeys('').secret_key);
-        return stripe.webhooks.constructEvent(rawBody, signature, config.STRIPE_WEBHOOK_SECRET);
-    } catch (err) {
-        logger.warn(`Stripe webhook signature verification failed: ${err.message}`);
+        return Stripe.webhooks.constructEvent(rawBody, signature, config.stripe.webhookSecret);
+    } catch (error) {
+        logger.warn(`Stripe webhook signature verification failed: ${error.message}`);
         throw new ApiError(httpStatus.BAD_REQUEST, 'Webhook signature verification failed.');
     }
+};
+
+// The events that change a payment's status, and the statuses each may change. Stripe can send an event twice or out
+// of order, so a late failure never overwrites a success, and only a successful payment becomes refunded.
+const STATUS_EVENTS = {
+    'payment_intent.succeeded': { to: 'SUCCESS', from: ['PENDING', 'REJECTED'] },
+    'payment_intent.payment_failed': { to: 'REJECTED', from: ['PENDING'] },
+    'payment_intent.canceled': { to: 'REJECTED', from: ['PENDING'] },
+    'charge.refunded': { to: 'REFUNDED', from: ['SUCCESS'] },
+};
+
+// Applies a verified event to its payments row. Returns how many rows changed (0 for other events).
+const applyWebhookEvent = async (event) => {
+    const change = STATUS_EVENTS[event.type];
+    if (!change) return 0;
+    const object = event.data.object;
+    let intentId = object.id;
+    if (event.type === 'charge.refunded') {
+        // The event carries the charge; a partial refund leaves the payment as it is.
+        if (!object.refunded) return 0;
+        intentId = typeof object.payment_intent === 'object' ? object.payment_intent?.id : object.payment_intent;
+    }
+    if (!intentId) return 0;
+    const [updated] = await Payment.update(
+        { payment_status: change.to },
+        { where: { transaction_id: intentId, payment_status: change.from } },
+    );
+    return updated;
 };
 
 // Successful payments created today (UTC), with the given attributes.
@@ -136,5 +172,6 @@ module.exports = {
     getCustomer,
     createPaymentIntent,
     constructWebhookEvent,
+    applyWebhookEvent,
     successfulPaymentsToday,
 };

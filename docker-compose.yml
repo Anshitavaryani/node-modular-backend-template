@@ -8,9 +8,11 @@
 #
 # Values come from .env (copy .env.example). Inside the network the database host is "mysql" and Redis is "redis"; the
 # api service overrides those two, so .env can keep localhost for running the API on your machine.
+# Host ports come from .env too: CENTRAL_MYSQL_PORT, REDIS_PORT, PMA_PORT and PORT (defaults 3306, 6379, 8080, 5000).
+# Change them when another stack already uses those ports; the API on your machine reads the same values.
 services:
   mysql:
-    image: mariadb:10.11
+    image: mariadb:12.3
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
@@ -20,9 +22,11 @@ services:
       MARIADB_AUTO_UPGRADE: "1"
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--max-allowed-packet=64M"]
     ports:
-      - "3306:3306"
+      - "${CENTRAL_MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
+      # Runs once on an empty volume: lets the app user create the *_test databases that npm test builds.
+      - ./docker/mariadb-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
@@ -30,11 +34,11 @@ services:
       retries: 30
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -44,14 +48,14 @@ services:
       retries: 30
 
   phpmyadmin:
-    image: phpmyadmin:5
+    image: phpmyadmin:5.2
     restart: unless-stopped
     environment:
       PMA_HOST: mysql
       PMA_USER: root
       PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     ports:
-      - "8080:80"
+      - "${PMA_PORT:-8080}:80"
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,6 +66,8 @@ services:
     env_file: .env
     environment:
       NODE_ENV: ${NODE_ENV_DOCKER:-development}
+      # The app listens on 5000 inside the container whatever PORT is in .env; PORT is the host side of the mapping.
+      PORT: 5000
       CENTRAL_MYSQL_HOST: mysql
       CENTRAL_MYSQL_PORT: 3306
       REDIS_HOST: redis

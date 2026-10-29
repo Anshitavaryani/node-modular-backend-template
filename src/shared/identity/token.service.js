@@ -13,9 +13,12 @@ const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 const randomToken = (length) =>
   Array.from({ length }, () => CHARSET[crypto.randomInt(CHARSET.length)]).join("");
 
+// jti makes every token unique: without it, two tokens for one user in the same second are identical, so ending one
+// session (logout, password change) would leave the other row, and the same token, working.
 const generateToken = (userId, expires, type, roleId) =>
   jwt.sign(
     {
+      jti: crypto.randomUUID(),
       sub: userId,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(expires.getTime() / 1000),
@@ -55,6 +58,11 @@ const verifyToken = async (token, type) => {
   return tokenDoc;
 };
 
+// A short HMAC of an admin's password hash, carried in the admin's tokens. Changing the password changes it, so every
+// token signed before the change stops working (admin tokens are not stored, so they cannot be deleted instead).
+const passwordStamp = (passwordHash) =>
+  crypto.createHmac("sha256", config.jwt.secret).update(String(passwordHash)).digest("base64url").slice(0, 16);
+
 const generateAuthTokens = async (user) => {
   const expires = new Date(Date.now() + config.jwt.accessTokenMinutes * 60 * 1000);
   const accessToken = generateToken(user.id, expires, TOKEN_TYPE.ACCESS, user.role_id);
@@ -71,4 +79,5 @@ module.exports = {
   saveToken,
   verifyToken,
   generateAuthTokens,
+  passwordStamp,
 };

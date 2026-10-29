@@ -32,7 +32,7 @@ const accepted = (file) => {
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        if (!FIELDS.includes(file.fieldname)) return cb(new Error('Invalid upload field'));
+        if (!FIELDS.includes(file.fieldname)) return cb(ApiError.withCode(httpStatus.BAD_REQUEST, 'Invalid upload field.', 'LIMIT_UNEXPECTED_FILE'));
         return cb(null, path.join(UPLOADS_DIR, file.fieldname));
     },
     filename: (req, file, cb) => {
@@ -50,7 +50,27 @@ const upload = multer({
     },
 });
 
-// uploadFields([{ name: 'images', maxCount: 10 }]) -> middleware that fills req.files
-const uploadFields = (fields) => upload.fields(fields);
+// A request that fails after its files were stored (a validation error, say) keeps none of them.
+const removeFilesOnFailure = (req, res) => res.on('finish', () => {
+    if (res.statusCode < 400 || !req.files) return;
+    const files = Array.isArray(req.files) ? req.files : Object.values(req.files).flat();
+    for (const file of files) fs.rm(file.path, { force: true }, () => {});
+});
+
+// uploadFields([{ name: 'images', maxCount: 10 }]) -> middleware that fills req.files. Multer's own errors (a field
+// not listed, too many files, a file over the size limit) are the client's: 400, or 413 for the size.
+const uploadFields = (fields) => {
+    const middleware = upload.fields(fields);
+    return (req, res, next) => {
+        removeFilesOnFailure(req, res);
+        middleware(req, res, (error) => {
+            if (error instanceof multer.MulterError) {
+                const status = error.code === 'LIMIT_FILE_SIZE' ? httpStatus.PAYLOAD_TOO_LARGE : httpStatus.BAD_REQUEST;
+                return next(ApiError.withCode(status, error.message, error.code));
+            }
+            return next(error);
+        });
+    };
+};
 
 module.exports = { uploadFields, UPLOADS_DIR, FIELDS };

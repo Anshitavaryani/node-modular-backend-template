@@ -2,6 +2,8 @@
 const { authenticate, optionalAuth, authenticateAdmin, requireRole } = require("./authenticate");
 const { createAdminUser } = require("./adminAuth.service");
 const { findUserById } = require("./user.service");
+const { ROLE } = require("./constants");
+const { validatePassword, PASSWORD_RULES } = require("./passwordRules");
 
 module.exports = {
   // Mounted under /api/v1 by src/routes.js, in this order.
@@ -21,9 +23,14 @@ module.exports = {
   authenticateAdmin,
   // requireRole(...abbreviations): 401 unless the caller's role (req.admin, else req.user) is listed.
   requireRole,
+  // ROLE: the seeded role abbreviations requireRole() compares against (SUPER_ADMIN: "SUP_ADM", ADMIN: "ADM"...).
+  ROLE,
   // Services for other modules:
   // findUserById(id): the active user with that id, or null.
   findUserById,
   // createAdminUser(fields): creates an admin (hashes the password); returns it without credentials.
   createAdminUser,
+  // validatePassword(password): whether a new password meets the rules; PASSWORD_RULES is the message when not.
+  validatePassword,
+  PASSWORD_RULES,
 };

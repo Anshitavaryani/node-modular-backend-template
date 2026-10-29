@@ -51,9 +51,39 @@ const latestCode = async (email, type) => {
     return row && row.code;
 };
 
+// Creates an admin with the role that has this abbreviation (SUP_ADM, ADM, SUB_ADM, ENG...).
+const createAdmin = async ({ name, email, password, role }) => {
+    const roleRow = await Role.findOne({ where: { abbreviation: role } });
+    const dept = await Department.findOne({ order: [['id', 'ASC']] });
+    await createAdminUser({ name, email, password, role_id: roleRow.id, department_id: dept.id });
+    return { name, email, password };
+};
+
+// Admin sign-in token.
+const signInAdmin = async ({ email, password }) => {
+    const res = await request('POST', '/admin/auth/login', { body: { email, password } });
+    if (res.status !== 200) throw new Error(`admin sign-in failed for ${email}: ${res.status} ${res.body.message}`);
+    return res.body.data.token;
+};
+
+// A verified, signed-in user with the default role, made through the public API: register, verify the emailed code,
+// sign in. Returns the access token. Registration starts the 60 s code cooldown for this email.
+const signUpUser = async ({ name, email, mobile, password }) => {
+    const registered = await request('POST', '/user/auth/register', { body: { name, email, mobile, password, confirm_password: password } });
+    if (registered.status !== 201) throw new Error(`registration failed for ${email}: ${registered.status} ${registered.body.message}`);
+    const otp = await latestCode(email, 'email_varification');
+    await request('POST', '/user/auth/verify-otp', { body: { email, otp, type: 'email_varification' } });
+    const signedIn = await request('POST', '/user/auth/login', { body: { email, password } });
+    if (signedIn.status !== 200) throw new Error(`sign-in failed for ${email}: ${signedIn.status} ${signedIn.body.message}`);
+    return signedIn.body.data.tokens.access.token;
+};
+
+// The running server's API base URL (http://127.0.0.1:<port>/api/v1), for requests request() cannot make.
+const apiUrl = () => baseUrl;
+
 const close = async () => {
     if (server) await new Promise((resolve) => server.close(resolve));
     await Promise.allSettled([db.close(), redis.quit()]);
 };
 
-module.exports = { start, request, ensureSuperAdmin, latestCode, close, SUPER };
+module.exports = { start, apiUrl, request, ensureSuperAdmin, latestCode, createAdmin, signInAdmin, signUpUser, close, SUPER };

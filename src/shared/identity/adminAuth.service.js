@@ -5,9 +5,12 @@ const config = require("../../core/config/config");
 const ApiError = require("../../core/http/ApiError");
 const httpStatus = require("../../core/http/status");
 const randomDigits = require("../../core/utils/randomDigits");
+const validateEmail = require("../../core/utils/validateEmail");
 const mailer = require("../../integrations/mailer");
 const { Admin } = require("../../models");
 const { OTP_TYPES, LIMITS } = require("./constants");
+const { validatePassword, PASSWORD_RULES } = require("./passwordRules");
+const { passwordStamp } = require("./token.service");
 const lockout = require("./lockout");
 
 const TOO_MANY_CODES = "Too many incorrect codes. Please request a new code.";
@@ -22,15 +25,23 @@ const hashPassword = (password) => bcrypt.hash(password, 10);
 const passwordMatches = (plain, hash) => (hash ? bcrypt.compare(plain, hash) : false);
 
 // The admin record without its credentials and reset state.
-const toPublicAdmin = (admin) => {
-  const { password, otp, remember_token, ...rest } = admin.get({ plain: true });
-  return rest;
-};
+const PRIVATE_FIELDS = ["password", "otp", "remember_token"];
+const toPublicAdmin = (admin) =>
+  Object.fromEntries(
+    Object.entries(admin.get({ plain: true })).filter(([field]) => !PRIVATE_FIELDS.includes(field))
+  );
 
 // scope tells an admin sign-in token apart from a user token (both carry the same kind of sub) and from a reset token.
+// pwd ties the token to the current password (see passwordStamp).
 const signAdminToken = (admin, expiresIn, scope = "admin") =>
   jwt.sign(
-    { sub: admin.id, role_id: admin.role_id, department_id: admin.department_id, scope },
+    {
+      sub: admin.id,
+      role_id: admin.role_id,
+      department_id: admin.department_id,
+      scope,
+      pwd: passwordStamp(admin.password),
+    },
     config.jwt.secret,
     { algorithm: "HS256", expiresIn }
   );
@@ -90,16 +101,20 @@ const resetAdminPassword = async (admin, { old_password, confirm_password }) => 
 };
 
 const sendOTP = async (email) => {
-  const admin = await Admin.findOne({ where: { email, is_active: true } });
-  if (!admin) throw new ApiError(httpStatus.NOT_FOUND, "Invalid Email");
-
+  if (!email || !validateEmail(String(email))) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "A valid email is required.");
+  }
   const keys = adminOtpKeys(email);
   await lockout.assertCooldown(keys.cooldown);
 
-  const code = randomDigits(6);
-  await mailer.sendForgotPasswordOTP(email, code);
-  await Admin.update({ otp: code, is_otp_valid: true }, { where: { id: admin.id } });
-  await lockout.clearFailures(keys.failures);
+  // The answer is the same whether or not the email belongs to an admin, so this form cannot be used to find admins.
+  const admin = await Admin.findOne({ where: { email, is_active: true } });
+  if (admin) {
+    const code = randomDigits(6);
+    await mailer.sendForgotPasswordOTP(email, code);
+    await Admin.update({ otp: code, is_otp_valid: true }, { where: { id: admin.id } });
+    await lockout.clearFailures(keys.failures);
+  }
   await lockout.startCooldown(keys.cooldown, LIMITS.OTP_RESEND_COOLDOWN_SECONDS);
   return true;
 };
@@ -112,20 +127,21 @@ const verifyOTP = async (email, otp, otpType) => {
   const keys = adminOtpKeys(email);
   await lockout.assertNotLocked(keys.failures, LIMITS.OTP_MAX_WRONG_ATTEMPTS, TOO_MANY_CODES);
 
+  // An unknown email is answered like a wrong code.
   const admin = await Admin.findOne({ where: { email } });
-  if (!admin) throw new ApiError(httpStatus.NOT_FOUND, "Invalid Email");
-
-  if (String(otp) !== admin.otp || admin.is_otp_valid === false) {
+  if (!admin || String(otp) !== admin.otp || admin.is_otp_valid === false) {
     const failures = await lockout.recordFailure(
       keys.failures,
       LIMITS.OTP_WRONG_ATTEMPT_WINDOW_SECONDS
     );
     if (failures >= LIMITS.OTP_MAX_WRONG_ATTEMPTS) {
-      admin.is_otp_valid = false;
-      await admin.save();
+      if (admin) {
+        admin.is_otp_valid = false;
+        await admin.save();
+      }
       throw lockout.tooManyRequests(TOO_MANY_CODES);
     }
-    throw new ApiError(httpStatus.NOT_FOUND, "Invalid OTP Entered");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP Entered");
   }
 
   // Expiry uses updated_at, which the write of the code bumps; the admin row has no expiration column.
@@ -152,17 +168,18 @@ const forgotAdminPassword = async ({ email, password, confirm_password, token })
       "Please Enter Required Fields : [ email, password, confirm_password, token ]"
     );
   }
-  const admin = await Admin.findOne({
-    where: { email, remember_token: token, is_active: true },
-  });
-  if (!admin || !isUnexpiredToken(token)) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Invalid Email or Token");
-  }
   if (password !== confirm_password) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "New Password and Confirm Password Must Be Equal"
     );
+  }
+  if (!validatePassword(password)) throw new ApiError(httpStatus.BAD_REQUEST, PASSWORD_RULES);
+  const admin = await Admin.findOne({
+    where: { email, remember_token: token, is_active: true },
+  });
+  if (!admin || !isUnexpiredToken(token)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Email or Token");
   }
   admin.password = await hashPassword(confirm_password);
   admin.remember_token = null;

@@ -1,12 +1,15 @@
 const express = require("express");
 const router = express.Router();
 
-const { authLimiter } = require("../../core/http/rateLimiter");
+const { authLimiter, codeLimiter } = require("../../core/http/rateLimiter");
 const { authenticateAdmin, requireRole } = require("./authenticate");
 const { ROLE } = require("./constants");
 const auth = require("./auth.validation");
 const admin = require("./admin.validation");
 const adminAuth = require("./adminAuth.controller");
+
+// Every path here is limited per IP in production (failed requests count; see core/http/rateLimiter.js).
+router.use(authLimiter);
 
 // Creating admin accounts is for super admins only.
 router.post(
@@ -16,17 +19,16 @@ router.post(
   admin.validateCreateAdminBody,
   adminAuth.createAdminUser
 );
-router.post("/login", authLimiter, admin.validateLoginAdminBody, adminAuth.loginAdminUser);
+router.post("/login", admin.validateLoginAdminBody, adminAuth.loginAdminUser);
 router.post(
   "/change-password",
-  authLimiter,
   auth.validateResetPasswordBody,
   authenticateAdmin,
   adminAuth.resetAdminPassword
 );
 // Recovery flow for an admin who cannot sign in, so no token is required.
-router.post("/otp", adminAuth.sendOTP);
-router.post("/verify-otp", authLimiter, adminAuth.verifyOTP);
-router.post("/forgot-password", authLimiter, adminAuth.forgotAdminPassword);
+router.post("/otp", codeLimiter, adminAuth.sendOTP);
+router.post("/verify-otp", adminAuth.verifyOTP);
+router.post("/forgot-password", adminAuth.forgotAdminPassword);
 
 module.exports = router;

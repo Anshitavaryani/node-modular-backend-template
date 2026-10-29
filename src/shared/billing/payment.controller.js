@@ -20,11 +20,12 @@ const createPaymentIntent = catchAsync(async (req, res) => {
     return responseWrapper(res, intent, '');
 });
 
-// Stripe's signature is the authentication here. Events are acknowledged and logged; no handler updates
-// payment_status yet.
+// Stripe's signature is the authentication here. Payment outcomes and full refunds update payments.payment_status
+// (see applyWebhookEvent); other events are acknowledged.
 const handleChargeAndIntentWebhook = catchAsync(async (req, res) => {
     const event = paymentService.constructWebhookEvent(req.rawBody, req.headers['stripe-signature']);
-    logger.info(`Stripe webhook event received: ${event.type}`);
+    const updated = await paymentService.applyWebhookEvent(event);
+    logger.info(`Stripe webhook ${event.type} (${event.id}): ${updated} payment(s) updated.`);
     return responseWrapper(res, { received: true }, '');
 });
 

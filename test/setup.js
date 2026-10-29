@@ -8,7 +8,7 @@ const { run: seed } = require('../src/core/db/seed');
 const redis = require('../src/core/redis/redis');
 
 async function globalSetup() {
-    if (!/_test$/.test(TEST_DATABASE)) throw new Error(`Refusing to reset ${TEST_DATABASE}: not a *_test database`);
+    if (!TEST_DATABASE.endsWith('_test')) throw new Error(`Refusing to reset ${TEST_DATABASE}: not a *_test database`);
     const { host, port, user, passwd } = config.databases.central;
     const admin = await mysql.createConnection({ host, port, user, password: passwd });
     try {

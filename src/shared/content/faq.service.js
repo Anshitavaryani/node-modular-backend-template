@@ -16,17 +16,16 @@ const getAllFaq = async () => Faq.findAll({
 });
 
 const updateFaq = async (reqBody, id) => {
-    const { question, answer } = reqBody;
-    const changes = {};
-    if (question && typeof question === 'string') changes.question = question;
-    if (answer && typeof answer === 'string') changes.answer = answer;
-
-    // A bulk update returns the affected row count; 0 means no FAQ has this id.
-    const [affectedCount] = await Faq.update(changes, { where: { id } });
-    if (affectedCount === 0) {
+    // Looked up first: a bulk update's affected count is 0 when nothing changed, which is not "not found".
+    const faq = await Faq.findByPk(id);
+    if (!faq) {
         throw new ApiError(httpStatus.NOT_FOUND, 'FAQ not found');
     }
-    return Faq.findByPk(id);
+    const { question, answer } = reqBody;
+    if (question && typeof question === 'string') faq.question = question;
+    if (answer && typeof answer === 'string') faq.answer = answer;
+    await faq.save();
+    return faq;
 };
 
 const deleteFaq = async (id) => {

@@ -1,6 +1,7 @@
 const httpStatus = require('../../core/http/status');
 const catchAsync = require('../../core/http/catchAsync');
 const responseWrapper = require('../../core/http/responseWrapper');
+const requireFields = require('../../core/utils/requireFields');
 const departmentService = require('./department.service');
 
 const getAllDepartments = catchAsync(async (req, res) => {
@@ -9,6 +10,7 @@ const getAllDepartments = catchAsync(async (req, res) => {
 });
 
 const createDepartment = catchAsync(async (req, res) => {
+    requireFields(req.body, ['name']);
     const department = await departmentService.createDepartment(req.body);
     return responseWrapper(res, department, 'New department Created Successfully', httpStatus.CREATED);
 });

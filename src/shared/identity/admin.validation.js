@@ -5,6 +5,7 @@ const catchAsync = require("../../core/http/catchAsync");
 const validateEmail = require("../../core/utils/validateEmail");
 const config = require("../../core/config/config");
 const { Admin, Role, Department } = require("../../models");
+const { validatePassword, PASSWORD_RULES } = require("./passwordRules");
 
 const badRequest = (message) => new ApiError(httpStatus.BAD_REQUEST, message);
 
@@ -20,6 +21,7 @@ const validateCreateAdminBody = catchAsync(async (req, res, next) => {
     throw badRequest("You are not authorized to create this role.");
   }
   if (!validateEmail(email)) throw badRequest("Invalid Name or Email");
+  if (!validatePassword(password)) throw badRequest(PASSWORD_RULES);
   if (await Admin.isEmailTaken(email)) throw badRequest("Email already taken");
 
   const roleKey = Number(role_id);

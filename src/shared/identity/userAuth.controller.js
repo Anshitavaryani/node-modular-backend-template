@@ -3,7 +3,6 @@ const ApiError = require("../../core/http/ApiError");
 const catchAsync = require("../../core/http/catchAsync");
 const pick = require("../../core/utils/pick");
 const responseWrapper = require("../../core/http/responseWrapper");
-const validatePassword = require("./passwordRules");
 const userAuth = require("./userAuth.service");
 
 const sendOTP = catchAsync(async (req, res) => {
@@ -52,13 +51,8 @@ const login = catchAsync(async (req, res) => {
   return responseWrapper(res, response, "Successfully Logged in.");
 });
 
+// The new password's strength is checked by auth.validateResetPasswordBody.
 const resetPassword = catchAsync(async (req, res) => {
-  if (!validatePassword(req.body.new_password)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Password should have a minimum length of 8 characters and must have at least 2 digits and No Blank Space"
-    );
-  }
   const response = await userAuth.resetPassword(
     { user: req.user, tokenDoc: req.tokenDoc },
     req.body

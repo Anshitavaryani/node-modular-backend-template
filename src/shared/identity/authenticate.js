@@ -10,6 +10,7 @@ const ApiError = require("../../core/http/ApiError");
 const httpStatus = require("../../core/http/status");
 const { User, UserToken, Profile, Admin, Role } = require("../../models");
 const { TOKEN_TYPE, ACCESS_TOKEN_HEADER } = require("./constants");
+const { passwordStamp } = require("./token.service");
 
 const unauthorized = (message) => new ApiError(httpStatus.UNAUTHORIZED, message);
 
@@ -83,6 +84,8 @@ const authenticateAdmin = catchAsync(async (req, res, next) => {
   if (payload.scope !== "admin") throw unauthorized("Invalid token.");
   const admin = await Admin.findOne({ where: { id: payload.sub, is_active: true } });
   if (!admin) throw unauthorized("Account no longer exists or is inactive.");
+  // A token signed before the admin's last password change is no longer valid.
+  if (payload.pwd !== passwordStamp(admin.password)) throw unauthorized("Token has expired. Please log in again.");
   req.admin = admin;
   next();
 });

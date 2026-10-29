@@ -202,6 +202,8 @@ const resetPassword = async ({ user, tokenDoc }, { old_password, confirm_passwor
 
   await tokenDoc.destroy({ force: true });
   const tokens = await generateAuthTokens(user);
+  delete tokens.access.id;
+  delete tokens.refresh.id;
   return { tokens };
 };
 

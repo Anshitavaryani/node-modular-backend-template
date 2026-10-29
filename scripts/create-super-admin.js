@@ -4,7 +4,7 @@ const config = require("../src/core/config/config");
 const logger = require("../src/core/logger");
 const db = require("../src/core/db/central.db");
 const { Admin } = require("../src/models");
-const { createAdminUser } = require("../src/shared/identity");
+const { createAdminUser, validatePassword, PASSWORD_RULES } = require("../src/shared/identity");
 
 const run = async () => {
   const {
@@ -19,6 +19,10 @@ const run = async () => {
     logger.error(
       "Cannot create super admin: set SUPER_ADMIN_NAME, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD, SUP_ADM_ROLE_ID and ADM_DEPT_ID in .env"
     );
+    return 1;
+  }
+  if (!validatePassword(password)) {
+    logger.error(`Cannot create super admin: SUPER_ADMIN_PASSWORD is too weak. ${PASSWORD_RULES}`);
     return 1;
   }
   if (await Admin.isEmailTaken(email)) {

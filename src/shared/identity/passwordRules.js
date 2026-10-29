@@ -22,4 +22,8 @@ const validatePassword = (pass) => {
   return schema.validate(pass);
 };
 
-module.exports = validatePassword;
+// Shown whenever a password breaks these rules.
+const PASSWORD_RULES =
+  "Password should have a minimum length of 8 characters and must have at least 2 digits and No Blank Space";
+
+module.exports = { validatePassword, PASSWORD_RULES };

@@ -33,6 +33,24 @@ const errorHandler = (err, req, res, next) => {
             data: '',
         });
     }
+    // A database constraint the request broke (a duplicate that got past an earlier check, a value a model rejects, a
+    // value longer than its column) is the client's to fix: 400, as the starter did for the first two. Only the field
+    // names are returned, not the library's wording.
+    const duplicate = err.name === 'SequelizeUniqueConstraintError';
+    const tooLong = err.name === 'SequelizeDatabaseError' && err.parent?.code === 'ER_DATA_TOO_LONG';
+    if (duplicate || tooLong || err.name === 'SequelizeValidationError') {
+        logger.warn(`${req.method} ${req.originalUrl}: ${err.name}: ${err.message}`);
+        const fields = tooLong
+            ? [/column '([^']+)'/.exec(err.parent.sqlMessage || '')?.[1]]
+            : (err.errors || []).map((e) => e.path);
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            status: httpStatus.BAD_REQUEST,
+            message: duplicate ? 'This record already exists.' : tooLong ? 'A value is too long.' : 'Invalid data.',
+            details: fields.filter(Boolean),
+            data: '',
+        });
+    }
     logger.error(`${req.method} ${req.originalUrl}`, err);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,

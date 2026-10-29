@@ -6,7 +6,7 @@ const { globalSetup } = require('./setup');
 
 (async () => {
     await globalSetup();
-    const files = require('fs').readdirSync(__dirname).filter((f) => f.endsWith('.test.js')).sort().map((f) => path.join(__dirname, f));
+    const files = require('fs').readdirSync(__dirname).filter((f) => f.endsWith('.test.js')).toSorted().map((f) => path.join(__dirname, f));
     const result = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...files], { stdio: 'inherit', env: process.env });
     process.exit(result.status ?? 1);
 })().catch((error) => {

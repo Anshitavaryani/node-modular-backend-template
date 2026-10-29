@@ -11,12 +11,12 @@ const createAdminUser = catchAsync(async (req, res) => {
 
 const loginAdminUser = catchAsync(async (req, res) => {
   const response = await adminAuth.loginAdminUser(pick(req.body, ["email", "password"]));
-  return responseWrapper(res, response, "", httpStatus.OK);
+  return responseWrapper(res, response, "Successfully Logged in.", httpStatus.OK);
 });
 
 const resetAdminPassword = catchAsync(async (req, res) => {
   const response = await adminAuth.resetAdminPassword(req.admin, req.body);
-  return responseWrapper(res, response, "", httpStatus.OK);
+  return responseWrapper(res, response, "Password Changed Successfully. Please sign in again.", httpStatus.OK);
 });
 
 const sendOTP = catchAsync(async (req, res) => {
@@ -31,7 +31,7 @@ const verifyOTP = catchAsync(async (req, res) => {
 
 const forgotAdminPassword = catchAsync(async (req, res) => {
   const response = await adminAuth.forgotAdminPassword(req.body);
-  return responseWrapper(res, response, "", httpStatus.OK);
+  return responseWrapper(res, response, "Password Changed Successfully.", httpStatus.OK);
 });
 
 module.exports = {

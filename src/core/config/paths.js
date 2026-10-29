@@ -27,4 +27,5 @@ module.exports = {
     UPLOADS_DIR,
     IMAGES_DIR: path.join(UPLOADS_DIR, 'images'),
     LOGS_DIR: path.join(STORAGE_DIR, 'logs'),
+    BACKUPS_DIR: path.join(STORAGE_DIR, 'backups'),
 };

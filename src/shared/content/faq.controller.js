@@ -1,9 +1,11 @@
 const catchAsync = require('../../core/http/catchAsync');
 const responseWrapper = require('../../core/http/responseWrapper');
 const httpStatus = require('../../core/http/status');
+const requireFields = require('../../core/utils/requireFields');
 const faqService = require('./faq.service');
 
 const createFaq = catchAsync(async (req, res) => {
+    requireFields(req.body, ['question', 'answer']);
     const faq = await faqService.createFaq(req.body);
     return responseWrapper(res, faq, 'New FAQ Created Successfully.', httpStatus.CREATED);
 });

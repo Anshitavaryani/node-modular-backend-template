@@ -1,4 +1,5 @@
-// Request checks for the user auth routes, and the reset-password check shared with the admin side.
+// Request checks for the user auth routes, and the reset-password check shared with the admin side. Every new
+// password must meet the rules in passwordRules.js.
 const httpStatus = require("../../core/http/status");
 const ApiError = require("../../core/http/ApiError");
 const catchAsync = require("../../core/http/catchAsync");
@@ -6,7 +7,7 @@ const validateEmail = require("../../core/utils/validateEmail");
 const config = require("../../core/config/config");
 const { User, OTP } = require("../../models");
 const { OTP_TYPES } = require("./constants");
-const validatePassword = require("./passwordRules");
+const { validatePassword, PASSWORD_RULES } = require("./passwordRules");
 
 const badRequest = (message) => new ApiError(httpStatus.BAD_REQUEST, message);
 
@@ -32,11 +33,7 @@ const validateRegisterBody = catchAsync(async (req, res, next) => {
   if (!validateEmail(email)) throw badRequest("Invalid Name or Email");
   if (await User.isEmailTaken(email, roleId)) throw badRequest("Email already taken");
 
-  if (!validatePassword(password)) {
-    throw badRequest(
-      "Password should have a minimum length of 8 characters and must have at least 2 digits and No Blank Space"
-    );
-  }
+  if (!validatePassword(password)) throw badRequest(PASSWORD_RULES);
   if (password !== confirm_password) {
     throw badRequest("Password and Confirm Password must be equal.");
   }
@@ -61,6 +58,7 @@ const validateResetPasswordBody = catchAsync(async (req, res, next) => {
   if (new_password !== confirm_password) {
     throw badRequest("New Password and Confirm Password Must Be Equal");
   }
+  if (!validatePassword(new_password)) throw badRequest(PASSWORD_RULES);
   next();
 });
 
@@ -74,6 +72,7 @@ const validateForgotPasswordRequest = catchAsync(async (req, res, next) => {
       "Please Enter Required Fields : [ email || new_password || confirm_password || token ]"
     );
   }
+  if (!validatePassword(password)) throw badRequest(PASSWORD_RULES);
   const user = await User.findOne({ where: { email, is_active: true, role_id: roleId } });
   if (!user) throw badRequest("User With This Email Id Not Found.");
 
